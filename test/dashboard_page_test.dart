@@ -20,6 +20,27 @@ void main() {
     expect(find.byKey(const Key('today-progress')), findsOneWidget);
     expect(find.textContaining('2'), findsWidgets);
 
+    expect(find.byKey(const Key('streak-text')), findsOneWidget);
+    expect(find.text('Current streak: 0 days'), findsOneWidget);
+
+    await db.close();
+  });
+
+  testWidgets('shows a non-zero streak when goal met today', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = WaterRepository(db);
+    final now = DateTime.now();
+    // Log 2 glasses today with a goal of 2 -> today meets goal -> streak >= 1.
+    await repo.logGlass(now);
+    await repo.logGlass(now);
+
+    await tester.pumpWidget(MaterialApp(
+      home: DashboardPage(repo: repo, dailyGoal: 2),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Current streak: 1 days'), findsOneWidget);
+
     await db.close();
   });
 }
