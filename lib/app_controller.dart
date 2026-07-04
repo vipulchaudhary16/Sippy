@@ -39,6 +39,8 @@ class AppController extends ChangeNotifier {
       await audio.play(settings.musicPaths,
           volume: settings.volume, muted: settings.muted);
     } catch (_) {
+      reminderVisible = false;
+      notifyListeners();
       final n = LocalNotification(
         title: 'Sippy',
         body: 'Time to drink water!',
@@ -48,16 +50,20 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> openDashboard() async {
+    reminderVisible = false;
     showDashboard = true;
     showSettings = false;
     notifyListeners();
+    await audio.stop();
     await windowManager.show();
   }
 
   Future<void> openSettings() async {
+    reminderVisible = false;
     showSettings = true;
     showDashboard = false;
     notifyListeners();
+    await audio.stop();
     await windowManager.show();
   }
 
