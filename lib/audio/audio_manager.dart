@@ -46,6 +46,8 @@ class FakeAudioSink implements AudioSink {
 
 class AudioManager {
   final AudioSink _sink;
+  double _currentVolume = 1.0;
+
   AudioManager({AudioPlayer? player})
       : _sink = _RealSink(player ?? AudioPlayer());
   AudioManager.withSink(this._sink);
@@ -53,10 +55,15 @@ class AudioManager {
   Future<void> play(List<String> paths,
       {required double volume, required bool muted}) async {
     if (muted || paths.isEmpty) return;
+    _currentVolume = volume;
     await _sink.loop(paths.first, volume);
   }
 
   Future<void> stop() => _sink.stop();
-  Future<void> setVolume(double v) => _sink.setVolume(v);
-  Future<void> setMuted(bool m) => m ? _sink.setVolume(0) : Future.value();
+  Future<void> setVolume(double v) {
+    _currentVolume = v;
+    return _sink.setVolume(v);
+  }
+
+  Future<void> setMuted(bool m) => _sink.setVolume(m ? 0 : _currentVolume);
 }

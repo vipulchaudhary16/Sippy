@@ -24,4 +24,26 @@ void main() {
     expect(fake.lastPath, equals('/a.mp3'));
     expect(fake.volume, equals(0.3));
   });
+
+  test('setMuted(true) then setMuted(false) restores the prior volume',
+      () async {
+    final fake = FakeAudioSink();
+    final mgr = AudioManager.withSink(fake);
+    await mgr.play(['/a.mp3'], volume: 0.7, muted: false);
+    expect(fake.volume, equals(0.7));
+    await mgr.setMuted(true);
+    expect(fake.volume, equals(0.0));
+    await mgr.setMuted(false);
+    expect(fake.volume, equals(0.7));
+  });
+
+  test('setVolume updates the restore point used by unmute', () async {
+    final fake = FakeAudioSink();
+    final mgr = AudioManager.withSink(fake);
+    await mgr.setVolume(0.4);
+    expect(fake.volume, equals(0.4));
+    await mgr.setMuted(true);
+    await mgr.setMuted(false);
+    expect(fake.volume, equals(0.4));
+  });
 }
