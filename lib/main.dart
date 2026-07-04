@@ -1,62 +1,58 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:drift/native.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'app_controller.dart';
+import 'audio/audio_manager.dart';
+import 'data/database.dart';
+import 'data/water_repository.dart';
+import 'overlay/character_stage.dart';
 import 'overlay/overlay_window.dart';
+import 'settings/settings_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureOverlayWindow();
-  runApp(const PocApp());
+
+  final dir = await getApplicationSupportDirectory();
+  final db = AppDatabase(NativeDatabase(File(p.join(dir.path, 'sippy.sqlite'))));
+  final prefs = await SharedPreferences.getInstance();
+
+  final controller = AppController(
+    repo: WaterRepository(db),
+    audio: AudioManager(),
+    settingsStore: SettingsStore(prefs),
+  );
+  await controller.init();
+
+  runApp(SippyApp(controller: controller));
 }
 
-class PocApp extends StatelessWidget {
-  const PocApp({super.key});
+class SippyApp extends StatelessWidget {
+  final AppController controller;
+  const SippyApp({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         backgroundColor: Colors.transparent,
-        body: SlidingBox(),
+        body: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            if (!controller.reminderVisible) return const SizedBox.shrink();
+            return CharacterStage(
+              message: 'Have you drank water?',
+              onDrank: controller.handleDrank,
+              onSnooze: controller.handleSnooze,
+            );
+          },
+        ),
       ),
-    );
-  }
-}
-
-class SlidingBox extends StatefulWidget {
-  const SlidingBox({super.key});
-
-  @override
-  State<SlidingBox> createState() => _SlidingBoxState();
-}
-
-class _SlidingBoxState extends State<SlidingBox>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 3),
-  )..forward();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final x = _controller.value * (width * 0.5);
-        return Stack(children: [
-          Positioned(
-            left: x,
-            bottom: 80,
-            child: Container(width: 120, height: 220, color: Colors.teal),
-          ),
-        ]);
-      },
     );
   }
 }
