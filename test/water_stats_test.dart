@@ -40,4 +40,22 @@ void main() {
     expect(counts.first, equals(1)); // 2026-06-28 is 7th-from-today
     expect(counts.last, equals(1)); // today
   });
+
+  test('currentStreak returns 0 when today misses the goal', () {
+    final today = DateTime(2026, 7, 4);
+    final stamps = <DateTime>[
+      DateTime(2026, 7, 4, 9), // only 1 glass, goal 2 -> miss
+    ];
+    expect(WaterStats.currentStreak(stamps, 2, today), equals(0));
+  });
+
+  test('currentStreak returns 0 when dailyGoal is zero or negative', () {
+    final today = DateTime(2026, 7, 4);
+    final stamps = <DateTime>[
+      DateTime(2026, 7, 4, 9),
+      DateTime(2026, 7, 3, 9),
+    ];
+    expect(WaterStats.currentStreak(stamps, 0, today), equals(0));
+    expect(WaterStats.currentStreak(stamps, -1, today), equals(0));
+  });
 }

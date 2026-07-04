@@ -12,6 +12,7 @@ class WaterStats {
 
   static int currentStreak(
       List<DateTime> stamps, int dailyGoal, DateTime today) {
+    if (dailyGoal <= 0) return 0;
     final counts = countsByDay(stamps);
     var streak = 0;
     var day = _midnight(today);
