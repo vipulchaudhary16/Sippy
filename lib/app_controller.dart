@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_notifier/local_notifier.dart';
 import 'package:window_manager/window_manager.dart';
 import 'audio/audio_manager.dart';
 import 'data/water_repository.dart';
@@ -14,6 +15,8 @@ class AppController extends ChangeNotifier {
 
   AppSettings settings = const AppSettings.defaults();
   bool reminderVisible = false;
+  bool showDashboard = false;
+  bool showSettings = false;
 
   AppController({
     required this.repo,
@@ -31,9 +34,37 @@ class AppController extends ChangeNotifier {
   Future<void> showReminder() async {
     reminderVisible = true;
     notifyListeners();
+    try {
+      await windowManager.show();
+      await audio.play(settings.musicPaths,
+          volume: settings.volume, muted: settings.muted);
+    } catch (_) {
+      final n = LocalNotification(
+        title: 'Sippy',
+        body: 'Time to drink water!',
+      );
+      await n.show();
+    }
+  }
+
+  Future<void> openDashboard() async {
+    showDashboard = true;
+    showSettings = false;
+    notifyListeners();
     await windowManager.show();
-    await audio.play(settings.musicPaths,
-        volume: settings.volume, muted: settings.muted);
+  }
+
+  Future<void> openSettings() async {
+    showSettings = true;
+    showDashboard = false;
+    notifyListeners();
+    await windowManager.show();
+  }
+
+  Future<void> closeSettings() async {
+    showSettings = false;
+    notifyListeners();
+    await windowManager.hide();
   }
 
   Future<void> _dismiss() async {
