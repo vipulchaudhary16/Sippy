@@ -21,6 +21,7 @@ import 'tray/tray_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureOverlayWindow();
+  await windowManager.hide();
 
   final dir = await getApplicationSupportDirectory();
   final db = AppDatabase(NativeDatabase(File(p.join(dir.path, 'sippy.sqlite'))));
@@ -60,7 +61,9 @@ class SippyApp extends StatelessWidget {
           builder: (context, _) {
             if (controller.showDashboard) {
               return DashboardPage(
-                  repo: controller.repo, dailyGoal: controller.settings.dailyGoal);
+                  repo: controller.repo,
+                  dailyGoal: controller.settings.dailyGoal,
+                  onClose: controller.closeDashboard);
             }
             if (controller.showSettings) {
               return SettingsPage(

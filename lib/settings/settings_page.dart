@@ -25,6 +25,8 @@ class _SettingsPageState extends State<SettingsPage> {
   int _parse(TextEditingController c, int fallback) =>
       int.tryParse(c.text) ?? fallback;
 
+  int _atLeastOne(int v) => v < 1 ? 1 : v;
+
   Future<void> _addMusic() async {
     final result = await FilePicker.platform
         .pickFiles(type: FileType.audio, allowMultiple: true);
@@ -99,9 +101,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ElevatedButton(
           key: const Key('save-settings'),
           onPressed: () => widget.onSave(AppSettings(
-            intervalMinutes: _parse(_interval, widget.initial.intervalMinutes),
-            snoozeMinutes: _parse(_snooze, widget.initial.snoozeMinutes),
-            dailyGoal: _parse(_goal, widget.initial.dailyGoal),
+            intervalMinutes:
+                _atLeastOne(_parse(_interval, widget.initial.intervalMinutes)),
+            snoozeMinutes:
+                _atLeastOne(_parse(_snooze, widget.initial.snoozeMinutes)),
+            dailyGoal: _atLeastOne(_parse(_goal, widget.initial.dailyGoal)),
             volume: _volume,
             muted: _muted,
             musicPaths: List.of(_music),

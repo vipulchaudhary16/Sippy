@@ -13,7 +13,7 @@ void main() {
     await repo.logGlass(DateTime.now());
 
     await tester.pumpWidget(MaterialApp(
-      home: DashboardPage(repo: repo, dailyGoal: 8),
+      home: DashboardPage(repo: repo, dailyGoal: 8, onClose: () {}),
     ));
     await tester.pumpAndSettle();
 
@@ -35,7 +35,7 @@ void main() {
     await repo.logGlass(now);
 
     await tester.pumpWidget(MaterialApp(
-      home: DashboardPage(repo: repo, dailyGoal: 2),
+      home: DashboardPage(repo: repo, dailyGoal: 2, onClose: () {}),
     ));
     await tester.pumpAndSettle();
 

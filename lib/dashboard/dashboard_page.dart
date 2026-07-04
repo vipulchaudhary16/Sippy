@@ -6,7 +6,12 @@ import 'water_stats.dart';
 class DashboardPage extends StatefulWidget {
   final WaterRepository repo;
   final int dailyGoal;
-  const DashboardPage({super.key, required this.repo, required this.dailyGoal});
+  final VoidCallback onClose;
+  const DashboardPage(
+      {super.key,
+      required this.repo,
+      required this.dailyGoal,
+      required this.onClose});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -32,7 +37,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final week = WaterStats.lastSevenDays(_stamps, today);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sippy — Progress')),
+      appBar: AppBar(
+        title: const Text('Sippy — Progress'),
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: widget.onClose),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
