@@ -20,4 +20,25 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.intervalMinutes, equals(30));
   });
+
+  testWidgets('saves edited interval, snooze, and goal to correct fields', (tester) async {
+    AppSettings? saved;
+    await tester.pumpWidget(MaterialApp(
+      home: SettingsPage(
+        initial: const AppSettings.defaults(),
+        onSave: (s) async => saved = s,
+      ),
+    ));
+
+    await tester.enterText(find.byKey(const Key('interval-field')), '25');
+    await tester.enterText(find.byKey(const Key('snooze-field')), '7');
+    await tester.enterText(find.byKey(const Key('goal-field')), '12');
+    await tester.tap(find.byKey(const Key('save-settings')));
+    await tester.pump();
+
+    expect(saved, isNotNull);
+    expect(saved!.intervalMinutes, equals(25));
+    expect(saved!.snoozeMinutes, equals(7));
+    expect(saved!.dailyGoal, equals(12));
+  });
 }

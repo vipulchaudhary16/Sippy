@@ -35,6 +35,14 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   @override
+  void dispose() {
+    _interval.dispose();
+    _snooze.dispose();
+    _goal.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sippy — Settings')),
@@ -96,7 +104,7 @@ class _SettingsPageState extends State<SettingsPage> {
             dailyGoal: _parse(_goal, widget.initial.dailyGoal),
             volume: _volume,
             muted: _muted,
-            musicPaths: _music,
+            musicPaths: List.of(_music),
           )),
           child: const Text('Save'),
         ),
