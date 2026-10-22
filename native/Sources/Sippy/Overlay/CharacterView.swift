@@ -13,7 +13,7 @@ struct CharacterView: View {
 
     var body: some View {
         if let frames = sprites.frames(for: pose) {
-            SpriteView(frames: frames, fps: pose == .walking ? 8 : 4)
+            SpriteView(frames: frames, fps: pose == .walking ? 8 : 4, blinks: pose == .idle)
         } else {
             DrawnCharacter(pose: pose)
         }
@@ -33,12 +33,14 @@ struct SpriteSet {
     var isEmpty: Bool { walk.isEmpty && idle.isEmpty && sip.isEmpty && cheer.isEmpty }
 
     func frames(for pose: CharacterPose) -> [NSImage]? {
+        // When a pose borrows the idle set, use only the eyes-open frame so it doesn't flicker.
+        let still = Array(idle.prefix(1))
         let set: [NSImage]
         switch pose {
-        case .walking: set = walk.isEmpty ? idle : walk
-        case .idle: set = idle.isEmpty ? walk : idle
-        case .sipping: set = sip.isEmpty ? idle : sip
-        case .cheering: set = cheer.isEmpty ? (idle.isEmpty ? sip : idle) : cheer
+        case .walking: set = walk.isEmpty ? still : walk
+        case .idle: set = idle.isEmpty ? Array(walk.prefix(1)) : idle
+        case .sipping: set = sip.isEmpty ? still : sip
+        case .cheering: set = cheer.isEmpty ? (idle.isEmpty ? sip : still) : cheer
         }
         if set.isEmpty { return isEmpty ? nil : frames(for: .idle) }
         return set
@@ -63,14 +65,19 @@ struct SpriteSet {
 struct SpriteView: View {
     let frames: [NSImage]
     let fps: Double
+    /// Idle: hold the first frame and flash the last one briefly every few seconds (a blink).
+    var blinks = false
 
     private var isPixelArt: Bool {
         (frames.first?.representations.first?.pixelsWide ?? 0) <= 256
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1 / fps)) { context in
-            let i = Int(context.date.timeIntervalSinceReferenceDate * fps) % frames.count
+        TimelineView(.periodic(from: .now, by: blinks ? 0.06 : 1 / fps)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            let i = blinks
+                ? (t.truncatingRemainder(dividingBy: 3.5) < 0.18 ? frames.count - 1 : 0)
+                : Int(t * fps) % frames.count
             Image(nsImage: frames[i])
                 .resizable()
                 // Small frames are pixel art: keep them crisp. Big ones are illustrations: smooth them.
