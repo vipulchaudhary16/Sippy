@@ -13,6 +13,19 @@
   <img src="docs/images/demo.png" width="420" alt="Sippy's character standing on the desktop asking how much you sipped">
 </p>
 
+<p align="center">
+  <a href="https://github.com/vipulchaudhary16/Sippy/releases/latest"><b>⬇️ Download</b></a>
+  &nbsp;·&nbsp;
+  <a href="docs/character-guide.md"><b>🎨 Make your own character with AI</b></a>
+  &nbsp;·&nbsp;
+  <a href="docs/architecture.md"><b>🛠 How it works</b></a>
+</p>
+
+> **Want the character to look like you, your partner, or your best friend?** The character above
+> was made from a photo with an AI image generator. The **[Character guide](docs/character-guide.md)**
+> walks you through it step by step: 10 copy-paste prompts, which image to attach for each one,
+> how to check the frames, and where to put them. No design skills needed.
+
 ---
 
 ## Why
@@ -79,6 +92,8 @@ If you're away, the character snoozes on their own after a few minutes rather th
    You only do this once.
 
 On first launch the character comes out to say hi. Then look for the **glass icon in the menu bar**.
+
+**Next:** make the character your own with the **[Character guide](docs/character-guide.md)**.
 
 ### Build it yourself (no Xcode needed)
 
