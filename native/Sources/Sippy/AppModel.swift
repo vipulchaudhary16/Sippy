@@ -5,14 +5,14 @@ import SippyCore
 /// Shared state for the menu bar, the overlay, and the windows.
 final class AppModel: ObservableObject {
     @Published private(set) var settings: AppSettings
-    @Published private(set) var entries: [Date]
+    @Published private(set) var entries: [IntakeEntry]
     @Published var paused = false
     private var sessionLocked = false
     private var displayAsleep = false
     private var screenLocked: Bool { sessionLocked || displayAsleep }
 
     let store = SettingsStore()
-    let log = IntakeLog(fileURL: IntakeLog.defaultURL())
+    let intakeLog = IntakeLog(fileURL: IntakeLog.defaultURL())
     let audio = AudioPlayer()
     lazy var scheduler: ReminderScheduler = {
         let s = ReminderScheduler { [weak self] in self?.onReminderDue() }
@@ -26,12 +26,13 @@ final class AppModel: ObservableObject {
 
     init() {
         settings = store.load()
-        entries = log.entries
+        entries = intakeLog.entries
         observeScreenLock()
     }
 
     var stats: WaterStats { WaterStats(entries: entries) }
-    var todayCount: Int { stats.count(on: Date()) }
+    var amounts: Amounts { Amounts(settings) }
+    var todayML: Int { stats.total(on: Date()) }
 
     func start() {
         scheduleNext(.interval)
@@ -53,8 +54,8 @@ final class AppModel: ObservableObject {
 
     // MARK: - Answers from the overlay
 
-    func drank() {
-        logGlass()
+    func drank(ml: Int) {
+        log(ml: ml)
         scheduleNext(.interval)
     }
 
@@ -62,14 +63,14 @@ final class AppModel: ObservableObject {
         scheduleNext(.snooze)
     }
 
-    func logGlass() {
-        log.log()
-        entries = log.entries
+    func log(ml: Int) {
+        intakeLog.log(ml: ml)
+        entries = intakeLog.entries
     }
 
-    func undoLastGlass() {
-        log.removeLast()
-        entries = log.entries
+    func undoLast() {
+        intakeLog.removeLast()
+        entries = intakeLog.entries
     }
 
     func update(_ change: (inout AppSettings) -> Void) {

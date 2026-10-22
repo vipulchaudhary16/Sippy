@@ -1,35 +1,53 @@
 import Foundation
 
-/// Every glass the user logs, persisted as a JSON array of timestamps.
+public struct IntakeEntry: Codable, Equatable {
+    public let date: Date
+    public let ml: Int
+
+    public init(date: Date, ml: Int) {
+        self.date = date
+        self.ml = ml
+    }
+}
+
+/// Every drink the user logs, persisted as JSON.
 public final class IntakeLog {
-    public private(set) var entries: [Date]
+    /// What a glass counted as before entries carried an amount.
+    public static let legacyGlassML = 250
+
+    public private(set) var entries: [IntakeEntry]
     private let fileURL: URL?
 
     /// Pass `nil` for an in-memory log (tests).
     public init(fileURL: URL?) {
         self.fileURL = fileURL
-        if let url = fileURL,
-           let data = try? Data(contentsOf: url),
-           let dates = try? JSONDecoder().decode([Date].self, from: data) {
-            entries = dates.sorted()
-        } else {
-            entries = []
+        entries = fileURL.flatMap { try? Data(contentsOf: $0) }.map(Self.decode) ?? []
+    }
+
+    /// Reads the current format, or the original one (a bare array of timestamps, one per glass).
+    static func decode(_ data: Data) -> [IntakeEntry] {
+        if let entries = try? JSONDecoder().decode([IntakeEntry].self, from: data) {
+            return entries.sorted { $0.date < $1.date }
         }
+        if let dates = try? JSONDecoder().decode([Date].self, from: data) {
+            return dates.sorted().map { IntakeEntry(date: $0, ml: legacyGlassML) }
+        }
+        return []
     }
 
     public static func defaultURL() -> URL {
         AppPaths.supportDirectory.appendingPathComponent("intake.json")
     }
 
-    public func log(at date: Date = Date()) {
-        entries.append(date)
-        entries.sort()
+    public func log(ml: Int, at date: Date = Date()) {
+        entries.append(IntakeEntry(date: date, ml: ml))
+        entries.sort { $0.date < $1.date }
         persist()
     }
 
     /// Removes the most recent entry (undo for an accidental tap).
     @discardableResult
-    public func removeLast() -> Date? {
+    public func removeLast() -> IntakeEntry? {
         guard let last = entries.popLast() else { return nil }
         persist()
         return last

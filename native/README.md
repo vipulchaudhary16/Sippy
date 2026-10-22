@@ -4,6 +4,10 @@ A menu-bar app: every so often a little character walks onto your screen, sips
 some water, and asks whether you drank too. Answer **Yes, I drank!** to log a
 glass or **Snooze**. If you ignore it, it snoozes itself after a few minutes.
 
+Drink from a bottle instead of glasses? Settings → **How I drink → A bottle**: set the
+bottle size and a daily goal in litres, and the reminder asks how much you sipped
+(a few sips, ¼, ½ or the whole bottle).
+
 Built with Swift/SwiftUI using only the Xcode **Command Line Tools** (no Xcode needed).
 
 ## Build & install
@@ -25,5 +29,5 @@ and drop transparent PNGs facing right: `walk_0.png, walk_1.png…`, `idle_0.png
 ## Where things live
 
 - Settings: `defaults read com.vipulchaudhary.sippy`
-- Water log: `~/Library/Application Support/Sippy/intake.json`
+- Water log: `~/Library/Application Support/Sippy/intake.json` (millilitres per drink)
 - Art check without a screen: `.build/debug/Sippy --render-previews <dir>`

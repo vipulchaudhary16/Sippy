@@ -1,10 +1,13 @@
 import SwiftUI
+import SippyCore
 
 struct ReminderView: View {
     @ObservedObject var state: OverlayState
-    let onDrank: () -> Void
+    let onDrink: (Int) -> Void
     let onSnooze: () -> Void
     let snoozeMinutes: () -> Int
+
+    private let drinkBlue = Color(red: 0.2, green: 0.55, blue: 0.95)
 
     private var showBubble: Bool { state.stage == .asking || state.stage == .answered }
 
@@ -15,7 +18,7 @@ struct ReminderView: View {
             if showBubble {
                 bubble
                     .frame(width: 230)
-                    .position(x: 255, y: 115)
+                    .position(x: 255, y: 125)
                     .transition(.scale(scale: 0.3, anchor: .bottomLeading).combined(with: .opacity))
             }
 
@@ -23,7 +26,7 @@ struct ReminderView: View {
                 .frame(width: 210, height: 310)
                 .scaleEffect(x: state.facingLeft ? -1 : 1, y: 1)
         }
-        .frame(width: 380, height: 500)
+        .frame(width: 380, height: 540)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: state.stage)
     }
 
@@ -37,10 +40,18 @@ struct ReminderView: View {
 
             if state.stage == .asking {
                 VStack(spacing: 8) {
-                    Button(action: onDrank) {
-                        Label("Yes, I drank!", systemImage: "drop.fill")
+                    if state.options.count == 1, let only = state.options.first {
+                        Button { onDrink(only.ml) } label: { Label(only.label, systemImage: "drop.fill") }
+                            .buttonStyle(PillButton(fill: drinkBlue, text: .white))
+                    } else {
+                        // Bottle mode: how much did you sip?
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                            ForEach(state.options) { option in
+                                Button(option.label) { onDrink(option.ml) }
+                                    .buttonStyle(PillButton(fill: drinkBlue, text: .white))
+                            }
+                        }
                     }
-                    .buttonStyle(PillButton(fill: Color(red: 0.2, green: 0.55, blue: 0.95), text: .white))
 
                     Button(action: onSnooze) {
                         Label("Snooze \(snoozeMinutes()) min", systemImage: "moon.zzz.fill")

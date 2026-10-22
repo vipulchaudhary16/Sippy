@@ -9,13 +9,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private let todayItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let nextItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private lazy var logItem = NSMenuItem(title: "Log a Glass", action: #selector(logQuick), keyEquivalent: "l")
     private lazy var pauseItem = NSMenuItem(title: "Pause Reminders", action: #selector(togglePause), keyEquivalent: "p")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        let icon = NSImage(systemSymbolName: "drop.fill", accessibilityDescription: "Sippy")
-        icon?.isTemplate = true
-        statusItem.button?.image = icon
+        statusItem.button?.image = Self.glassIcon()
         statusItem.menu = buildMenu()
 
         model.start()
@@ -28,6 +27,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// Menu-bar glass: a tapered tumbler, half full. Template so it follows light/dark menu bars.
+    static func glassIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            let top: CGFloat = 16, bottom: CGFloat = 2, topHalf: CGFloat = 6.5, bottomHalf: CGFloat = 4.8, mid: CGFloat = 9
+            func x(_ y: CGFloat, _ side: CGFloat) -> CGFloat {
+                let half = bottomHalf + (topHalf - bottomHalf) * (y - bottom) / (top - bottom)
+                return mid + side * half
+            }
+            let outline = NSBezierPath()
+            outline.move(to: NSPoint(x: x(top, -1), y: top))
+            outline.line(to: NSPoint(x: x(bottom, -1), y: bottom))
+            outline.line(to: NSPoint(x: x(bottom, 1), y: bottom))
+            outline.line(to: NSPoint(x: x(top, 1), y: top))
+            outline.lineWidth = 1.5
+            outline.lineJoinStyle = .round
+            outline.lineCapStyle = .round
+            NSColor.black.setStroke()
+            outline.stroke()
+
+            let level: CGFloat = 9.5
+            let water = NSBezierPath()
+            water.move(to: NSPoint(x: x(bottom, -1) + 1, y: bottom + 1))
+            water.line(to: NSPoint(x: x(level, -1) + 1, y: level))
+            water.curve(to: NSPoint(x: x(level, 1) - 1, y: level),
+                        controlPoint1: NSPoint(x: mid - 1.5, y: level + 1.4),
+                        controlPoint2: NSPoint(x: mid + 1.5, y: level - 1.4))
+            water.line(to: NSPoint(x: x(bottom, 1) - 1, y: bottom + 1))
+            water.close()
+            NSColor.black.setFill()
+            water.fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Sippy"
+        return image
+    }
+
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
@@ -37,7 +73,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(nextItem)
         menu.addItem(.separator())
         menu.addItem(item("Remind Me Now", #selector(remindNow), "r"))
-        menu.addItem(item("Log a Glass", #selector(logGlass), "l"))
+        logItem.target = self
+        menu.addItem(logItem)
         pauseItem.target = self
         menu.addItem(pauseItem)
         menu.addItem(.separator())
@@ -55,7 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        todayItem.title = "💧 Today: \(model.todayCount) of \(model.settings.dailyGoal) glasses"
+        todayItem.title = "💧 Today: \(model.amounts.progress(model.todayML))"
+        logItem.title = model.amounts.quickLog.label
         pauseItem.state = model.paused ? .on : .off
         if model.paused {
             nextItem.title = "Reminders paused"
@@ -68,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func remindNow() { model.remindNow() }
-    @objc private func logGlass() { model.logGlass() }
+    @objc private func logQuick() { model.log(ml: model.amounts.quickLog.ml) }
     @objc private func togglePause() { model.paused.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
 

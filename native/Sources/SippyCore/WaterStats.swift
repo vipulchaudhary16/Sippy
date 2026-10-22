@@ -1,34 +1,36 @@
 import Foundation
 
-public struct DayCount: Equatable, Identifiable {
+public struct DayTotal: Equatable, Identifiable {
     public let day: Date
-    public let count: Int
+    public let ml: Int
     public var id: Date { day }
 }
 
 public struct WaterStats {
-    public let entries: [Date]
+    public let entries: [IntakeEntry]
     public let calendar: Calendar
 
-    public init(entries: [Date], calendar: Calendar = .current) {
+    public init(entries: [IntakeEntry], calendar: Calendar = .current) {
         self.entries = entries
         self.calendar = calendar
     }
 
-    public func count(on day: Date) -> Int {
-        entries.filter { calendar.isDate($0, inSameDayAs: day) }.count
+    public func total(on day: Date) -> Int {
+        entries.filter { calendar.isDate($0.date, inSameDayAs: day) }.map(\.ml).reduce(0, +)
     }
+
+    public var allTimeML: Int { entries.map(\.ml).reduce(0, +) }
 
     /// Consecutive days meeting the goal, ending today. Today counts only once met,
     /// so an in-progress day doesn't break yesterday's streak.
-    public func streak(goal: Int, now: Date = Date()) -> Int {
-        guard goal > 0 else { return 0 }
+    public func streak(goalML: Int, now: Date = Date()) -> Int {
+        guard goalML > 0 else { return 0 }
         var day = calendar.startOfDay(for: now)
-        if count(on: day) < goal {
+        if total(on: day) < goalML {
             day = calendar.date(byAdding: .day, value: -1, to: day)!
         }
         var streak = 0
-        while count(on: day) >= goal {
+        while total(on: day) >= goalML {
             streak += 1
             day = calendar.date(byAdding: .day, value: -1, to: day)!
         }
@@ -36,11 +38,11 @@ public struct WaterStats {
     }
 
     /// Oldest first, ending today.
-    public func lastDays(_ n: Int, now: Date = Date()) -> [DayCount] {
+    public func lastDays(_ n: Int, now: Date = Date()) -> [DayTotal] {
         let today = calendar.startOfDay(for: now)
         return (0..<n).reversed().map { offset in
             let day = calendar.date(byAdding: .day, value: -offset, to: today)!
-            return DayCount(day: day, count: count(on: day))
+            return DayTotal(day: day, ml: total(on: day))
         }
     }
 }

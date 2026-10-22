@@ -1,23 +1,28 @@
 import AppKit
+import SippyCore
 import SwiftUI
 
 /// Renders the overlay in each stage to PNG, for checking the art without a live screen.
 @MainActor
 func renderPreviews(to dir: URL) {
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    let shots: [(String, OverlayState.Stage, CharacterPose, String)] = [
-        ("1-walk", .arriving, .walking, ""),
-        ("2-sip", .arriving, .sipping, ""),
-        ("3-ask", .asking, .idle, "Psst! Water break time 💧\n(3 of 8 so far today)"),
-        ("4-cheer", .answered, .cheering, "Yay! That's 4 of 8 today 💧"),
+    var bottle = AppSettings()
+    bottle.trackingMode = .bottle
+    let shots: [(String, OverlayState.Stage, CharacterPose, String, AppSettings)] = [
+        ("1-walk", .arriving, .walking, "", AppSettings()),
+        ("2-sip", .arriving, .sipping, "", AppSettings()),
+        ("3-ask", .asking, .idle, "Psst! Water break time 💧\n(3 of 8 glasses so far today)", AppSettings()),
+        ("4-cheer", .answered, .cheering, "Yay! That's 4 of 8 glasses today 💧", AppSettings()),
+        ("5-ask-bottle", .asking, .idle, "Psst! Water break time 💧\n(1.2 of 2.5 L so far today)", bottle),
     ]
-    for (name, stage, pose, message) in shots {
+    for (name, stage, pose, message, settings) in shots {
         let state = OverlayState()
         state.stage = stage
         state.pose = pose
         state.message = message
         state.sprites = SpriteSet.load()
-        let view = ReminderView(state: state, onDrank: {}, onSnooze: {}, snoozeMinutes: { 10 })
+        state.options = Amounts(settings).drinkOptions
+        let view = ReminderView(state: state, onDrink: { _ in }, onSnooze: {}, snoozeMinutes: { 10 })
             .background(Color(white: 0.85)) // stand-in for the desktop
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2
@@ -25,5 +30,26 @@ func renderPreviews(to dir: URL) {
            let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
             try? png.write(to: dir.appendingPathComponent("\(name).png"))
         }
+    }
+
+    // Menu-bar icon, blown up 8x on light and dark bars.
+    let icon = AppDelegate.glassIcon()
+    let sheet = NSImage(size: NSSize(width: 320, height: 160), flipped: false) { _ in
+        for (i, bar) in [NSColor(white: 0.93, alpha: 1), NSColor(white: 0.16, alpha: 1)].enumerated() {
+            let frame = NSRect(x: CGFloat(i) * 160, y: 0, width: 160, height: 160)
+            bar.setFill()
+            frame.fill()
+            let tinted = NSImage(size: icon.size, flipped: false) { r in
+                icon.draw(in: r)
+                (i == 0 ? NSColor.black : NSColor.white).set()
+                r.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.draw(in: frame.insetBy(dx: 8, dy: 8))
+        }
+        return true
+    }
+    if let tiff = sheet.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+        try? png.write(to: dir.appendingPathComponent("menubar.png"))
     }
 }

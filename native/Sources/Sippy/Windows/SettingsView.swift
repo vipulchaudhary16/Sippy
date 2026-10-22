@@ -13,11 +13,29 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("How I drink") {
+                Picker("I drink from", selection: binding(\.trackingMode)) {
+                    Text("Glasses").tag(TrackingMode.glasses)
+                    Text("A bottle").tag(TrackingMode.bottle)
+                }
+                .pickerStyle(.segmented)
+                if s.trackingMode == .glasses {
+                    Stepper("Glass size: **\(s.glassML) ml**", value: binding(\.glassML), in: 50...1000, step: 50)
+                    Stepper("Daily goal: **\(s.dailyGoal) glasses** (\(String(format: "%g", Double(s.goalML) / 1000)) L)",
+                            value: binding(\.dailyGoal), in: 1...30)
+                } else {
+                    Stepper("Bottle size: **\(s.bottleML) ml**", value: binding(\.bottleML), in: 100...3000, step: 50)
+                    Stepper("Daily goal: **\(String(format: "%g", Double(s.dailyGoalML) / 1000)) L** (\(Amounts(s).goalInBottles))",
+                            value: binding(\.dailyGoalML), in: 250...10000, step: 250)
+                    Text("When she asks, tap how much you sipped: a few sips, ¼, ½ or the whole bottle.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+
             Section("Reminders") {
                 Stepper("Remind me every **\(s.intervalMinutes) min**",
                         value: binding(\.intervalMinutes), in: 1...240, step: s.intervalMinutes < 10 ? 1 : 5)
                 Stepper("Snooze for **\(s.snoozeMinutes) min**", value: binding(\.snoozeMinutes), in: 1...120)
-                Stepper("Daily goal: **\(s.dailyGoal) glasses**", value: binding(\.dailyGoal), in: 1...30)
                 Stepper("If I don't answer, snooze after **\(s.autoSnoozeMinutes) min**",
                         value: binding(\.autoSnoozeMinutes), in: 1...30)
                 Button("Show the reminder now") { model.remindNow() }
