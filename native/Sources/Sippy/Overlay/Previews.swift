@@ -16,6 +16,7 @@ func renderPreviews(to dir: URL) {
         state.stage = stage
         state.pose = pose
         state.message = message
+        state.sprites = SpriteSet.load()
         let view = ReminderView(state: state, onDrank: {}, onSnooze: {}, snoozeMinutes: { 10 })
             .background(Color(white: 0.85)) // stand-in for the desktop
         let renderer = ImageRenderer(content: view)
