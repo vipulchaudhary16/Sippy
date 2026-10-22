@@ -1,0 +1,38 @@
+import AVFoundation
+import AppKit
+
+/// Loops one of the user's music files while the character is on screen.
+/// With no music configured it plays a short glass "ding" instead.
+final class AudioPlayer {
+    private var player: AVAudioPlayer?
+
+    func start(paths: [String], volume: Double, muted: Bool) {
+        stop()
+        guard !muted else { return }
+        let playable = paths.filter { FileManager.default.fileExists(atPath: $0) }
+        guard let path = playable.randomElement() else {
+            let ding = NSSound(named: "Glass")
+            ding?.volume = Float(volume)
+            ding?.play()
+            return
+        }
+        // A missing or broken file just means no music, never a crash.
+        guard let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: path)) else { return }
+        p.numberOfLoops = -1
+        p.volume = 0
+        p.play()
+        p.setVolume(Float(volume), fadeDuration: 1.5)
+        player = p
+    }
+
+    func apply(volume: Double, muted: Bool) {
+        player?.volume = muted ? 0 : Float(volume)
+    }
+
+    func stop() {
+        guard let p = player else { return }
+        player = nil
+        p.setVolume(0, fadeDuration: 0.6)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { p.stop() }
+    }
+}
