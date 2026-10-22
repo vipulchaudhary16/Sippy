@@ -9,13 +9,16 @@ final class OverlayState: ObservableObject {
     @Published var stage: Stage = .arriving
     @Published var pose: CharacterPose = .walking
     @Published var facingLeft = false
+    /// Character stands at the panel's right edge with the bubble to its left.
+    @Published var fromRight = false
     @Published var message = ""
     @Published var sprites = SpriteSet()
     @Published var options: [DrinkOption] = []
 }
 
-/// Floating, transparent, always-on-top panel: the character walks in from the
-/// left edge of whichever screen the mouse is on, sips, asks, then walks out.
+/// Floating, transparent, always-on-top panel: the character walks in from the left or
+/// right edge of whichever screen the mouse is on, sips, asks, then walks back out.
+/// Frames are drawn facing right, so coming from the right they're mirrored to face inward.
 final class OverlayController {
     private unowned let model: AppModel
     private let state = OverlayState()
@@ -37,14 +40,18 @@ final class OverlayController {
         isShowing = true
         cancelPending()
 
+        let fromRight = model.settings.entrySide == .right
         let screen = currentScreen().visibleFrame
-        let start = NSRect(x: screen.minX - size.width, y: screen.minY, width: size.width, height: size.height)
-        let target = start.offsetBy(dx: size.width + 24, dy: 0)
+        let start = NSRect(x: offscreenX(in: screen, fromRight: fromRight), y: screen.minY,
+                           width: size.width, height: size.height)
+        let target = NSRect(x: fromRight ? screen.maxX - size.width - 24 : screen.minX + 24, y: screen.minY,
+                            width: size.width, height: size.height)
 
         state.sprites = SpriteSet.load()
         state.stage = .arriving
         state.pose = .walking
-        state.facingLeft = false
+        state.fromRight = fromRight
+        state.facingLeft = fromRight
         state.options = model.amounts.drinkOptions
         state.message = ReminderMessages.random(today: model.todayML == 0 ? nil : model.amounts.progress(model.todayML))
 
@@ -96,10 +103,12 @@ final class OverlayController {
     private func leave() {
         guard let panel else { return }
         state.stage = .leaving
-        state.facingLeft = true
+        // Turn around and head back to the edge they came from.
+        state.facingLeft = !state.fromRight
         state.pose = .walking
         let screen = panel.screen?.visibleFrame ?? currentScreen().visibleFrame
-        let offscreen = NSRect(x: screen.minX - size.width, y: panel.frame.minY, width: size.width, height: size.height)
+        let offscreen = NSRect(x: offscreenX(in: screen, fromRight: state.fromRight), y: panel.frame.minY,
+                               width: size.width, height: size.height)
         animate(panel, to: offscreen, seconds: walkOutSeconds) { [weak self] in
             panel.orderOut(nil)
             self?.isShowing = false
@@ -107,6 +116,10 @@ final class OverlayController {
     }
 
     // MARK: - Helpers
+
+    private func offscreenX(in screen: NSRect, fromRight: Bool) -> CGFloat {
+        fromRight ? screen.maxX : screen.minX - size.width
+    }
 
     private func makePanelIfNeeded() -> NSPanel {
         if let panel { return panel }

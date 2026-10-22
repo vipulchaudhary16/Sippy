@@ -9,12 +9,16 @@ func renderPreviews(to dir: URL, builtin: Bool = false) {
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     var bottle = AppSettings()
     bottle.trackingMode = .bottle
+    var fromRight = AppSettings()
+    fromRight.entrySide = .right
     let shots: [(String, OverlayState.Stage, CharacterPose, String, AppSettings)] = [
         ("1-walk", .arriving, .walking, "", AppSettings()),
         ("2-sip", .arriving, .sipping, "", AppSettings()),
         ("3-ask", .asking, .idle, "Psst! Water break time 💧\n(3 of 8 glasses so far today)", AppSettings()),
         ("4-cheer", .answered, .cheering, "Yay! That's 4 of 8 glasses today 💧", AppSettings()),
         ("5-ask-bottle", .asking, .idle, "Psst! Water break time 💧\n(1.2 of 2.5 L so far today)", bottle),
+        ("6-ask-right", .asking, .idle, "Psst! Water break time 💧\n(3 of 8 glasses so far today)", fromRight),
+        ("7-walk-right", .arriving, .walking, "", fromRight),
     ]
     for (name, stage, pose, message, settings) in shots {
         let state = OverlayState()
@@ -23,6 +27,8 @@ func renderPreviews(to dir: URL, builtin: Bool = false) {
         state.message = message
         state.sprites = builtin ? SpriteSet() : SpriteSet.load()
         state.options = Amounts(settings).drinkOptions
+        state.fromRight = settings.entrySide == .right
+        state.facingLeft = state.fromRight
         let view = ReminderView(state: state, onDrink: { _ in }, onSnooze: {}, snoozeMinutes: { 10 })
             .background(Color(white: 0.85)) // stand-in for the desktop
         let renderer = ImageRenderer(content: view)

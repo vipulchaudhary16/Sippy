@@ -1,5 +1,11 @@
 import Foundation
 
+/// Which screen edge the character walks in from.
+public enum EntrySide: String, Codable, CaseIterable {
+    case left
+    case right
+}
+
 public enum TrackingMode: String, Codable, CaseIterable {
     case glasses
     case bottle
@@ -19,6 +25,7 @@ public struct AppSettings: Codable, Equatable {
     public var glassML: Int = 250
     public var bottleML: Int = 1000
     public var dailyGoalML: Int = 2500
+    public var entrySide: EntrySide = .left
 
     public init() {}
 
@@ -55,6 +62,7 @@ public struct AppSettings: Codable, Equatable {
         glassML = try c.decodeIfPresent(Int.self, forKey: .glassML) ?? d.glassML
         bottleML = try c.decodeIfPresent(Int.self, forKey: .bottleML) ?? d.bottleML
         dailyGoalML = try c.decodeIfPresent(Int.self, forKey: .dailyGoalML) ?? d.dailyGoalML
+        entrySide = try c.decodeIfPresent(EntrySide.self, forKey: .entrySide) ?? d.entrySide
     }
 }
 

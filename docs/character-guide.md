@@ -34,7 +34,8 @@ These matter more than anything in the prompts. They're what make the animation 
 2. **Same size:** the character takes up the same height in every frame.
 3. **Same ground line:** feet at the same height near the bottom edge. If one frame's feet are
    higher, the character visibly hops when switching to it (fine for `cheer_1`, nowhere else).
-4. **Facing right** for walk frames. Sippy mirrors the frames automatically when the character walks out.
+4. **Facing right** for all frames. Sippy mirrors them automatically when the character walks out,
+   and when you set it to come in from the right (Settings → Character → Comes in from the Right).
 5. **Transparent background:** no floor, no shadow, no text.
 
 ## Workflow

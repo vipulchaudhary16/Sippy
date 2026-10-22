@@ -12,14 +12,15 @@ struct ReminderView: View {
     private var showBubble: Bool { state.stage == .asking || state.stage == .answered }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack(alignment: state.fromRight ? .bottomTrailing : .bottomLeading) {
             Color.clear
 
             if showBubble {
                 bubble
                     .frame(width: 230)
-                    .position(x: 255, y: 125)
-                    .transition(.scale(scale: 0.3, anchor: .bottomLeading).combined(with: .opacity))
+                    .position(x: state.fromRight ? 380 - 255 : 255, y: 125)
+                    .transition(.scale(scale: 0.3, anchor: state.fromRight ? .bottomTrailing : .bottomLeading)
+                        .combined(with: .opacity))
             }
 
             CharacterView(pose: state.pose, sprites: state.sprites)
@@ -62,7 +63,7 @@ struct ReminderView: View {
         }
         .padding(16)
         .background(
-            SpeechBubble()
+            SpeechBubble(tailOnRight: state.fromRight)
                 .fill(.white)
                 .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
         )
@@ -85,13 +86,22 @@ struct PillButton: ButtonStyle {
     }
 }
 
-/// Rounded rectangle with a tail pointing down-left toward the character's head.
+/// Rounded rectangle with a tail pointing down toward the character's head
+/// (down-left normally, down-right when the character stands to the bubble's right).
 struct SpeechBubble: Shape {
+    var tailOnRight = false
+
     func path(in r: CGRect) -> Path {
         var p = Path(roundedRect: r, cornerRadius: 18)
-        p.move(to: CGPoint(x: r.minX + 28, y: r.maxY - 2))
-        p.addLine(to: CGPoint(x: r.minX - 14, y: r.maxY + 26))
-        p.addLine(to: CGPoint(x: r.minX + 56, y: r.maxY - 2))
+        if tailOnRight {
+            p.move(to: CGPoint(x: r.maxX - 28, y: r.maxY - 2))
+            p.addLine(to: CGPoint(x: r.maxX + 14, y: r.maxY + 26))
+            p.addLine(to: CGPoint(x: r.maxX - 56, y: r.maxY - 2))
+        } else {
+            p.move(to: CGPoint(x: r.minX + 28, y: r.maxY - 2))
+            p.addLine(to: CGPoint(x: r.minX - 14, y: r.maxY + 26))
+            p.addLine(to: CGPoint(x: r.minX + 56, y: r.maxY - 2))
+        }
         p.closeSubpath()
         return p
     }

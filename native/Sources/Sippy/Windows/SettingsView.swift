@@ -66,7 +66,12 @@ struct SettingsView: View {
             }
 
             Section("Character") {
-                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right. Add **appear.mp3** to play a sound when the character walks in, and **cheer.mp3** for when you log a drink. Leave the folder empty to use the built-in one.")
+                Picker("Comes in from the", selection: binding(\.entrySide)) {
+                    Text("Left").tag(EntrySide.left)
+                    Text("Right").tag(EntrySide.right)
+                }
+                .pickerStyle(.segmented)
+                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, and **cheer.mp3** for when you log a drink. Leave the folder empty to use the built-in one.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

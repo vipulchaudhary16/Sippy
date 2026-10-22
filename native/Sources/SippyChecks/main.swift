@@ -144,6 +144,7 @@ test("bottle mode speaks in litres and bottle fractions") {
 test("settings from before bottle mode load as glasses") {
     let s = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"dailyGoal":6}"#.utf8))
     check(s.trackingMode == .glasses)
+    check(s.entrySide == .left)
     check(s.goalML == 1500)
 }
 
