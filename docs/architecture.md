@@ -125,6 +125,6 @@ UI is checked visually with the preview renderer, which draws each overlay stage
 
 ## History
 
-The first version was a Flutter desktop app (`lib/`, `macos/`, `test/` at the repo root, with its
-design spec and plan in `docs/superpowers/`). Flutter's macOS builds need full Xcode, so the app
-was rewritten natively. The Flutter code is kept for reference and isn't built.
+The first version was a Flutter desktop prototype; its design spec and plan are in
+`docs/superpowers/`. Flutter's macOS builds need full Xcode, so the app was rewritten natively and
+the Flutter code was removed. It's still in the git history from before the rewrite.

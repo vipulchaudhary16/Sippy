@@ -129,7 +129,7 @@ swift native/scripts/check_frames.swift
 |---|---|
 | [Character guide](docs/character-guide.md) | Making custom character art with AI image tools: every prompt, what to attach, how to check it |
 | [Architecture](docs/architecture.md) | How the app is built: components, data files, scheduler, build pipeline, checks |
-| [Original design spec](docs/superpowers/specs/2026-07-04-sippy-water-reminder-design.md) | The first design (Flutter era) |
+| [Original design spec](docs/superpowers/specs/2026-07-04-sippy-water-reminder-design.md) | The first design (Flutter prototype, since replaced) |
 
 ## Project layout
 
@@ -140,11 +140,11 @@ native/                  ← the app (Swift / SwiftUI, Swift Package)
   Sources/SippyChecks/   logic checks (swift run SippyChecks)
   scripts/               build.sh, make_icon.swift, check_frames.swift
 docs/                    documentation and images
-lib/ macos/ test/ …      original Flutter prototype (kept for history; not built)
 ```
 
-Sippy started as a cross-platform Flutter app. Flutter's macOS builds need full Xcode, so it was
-rewritten natively in Swift, which builds with only the Command Line Tools and comes out at ~1 MB.
+Sippy started as a cross-platform Flutter prototype. Flutter's macOS builds need full Xcode, so it
+was rewritten natively in Swift, which builds with only the Command Line Tools and comes out at ~1 MB.
+The prototype is in the git history (before the Swift rewrite) if you're curious.
 
 ## Development
 
@@ -155,3 +155,7 @@ swift build && .build/debug/Sippy                      # run a debug build
 .build/debug/Sippy --render-previews /tmp/p --builtin  # render overlay stages to PNG
 scripts/build.sh                                       # release .app + .dmg
 ```
+
+## License
+
+[MIT](LICENSE) © Vipul Chaudhary
