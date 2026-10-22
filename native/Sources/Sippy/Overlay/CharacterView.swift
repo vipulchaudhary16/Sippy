@@ -64,12 +64,17 @@ struct SpriteView: View {
     let frames: [NSImage]
     let fps: Double
 
+    private var isPixelArt: Bool {
+        (frames.first?.representations.first?.pixelsWide ?? 0) <= 256
+    }
+
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1 / fps)) { context in
             let i = Int(context.date.timeIntervalSinceReferenceDate * fps) % frames.count
             Image(nsImage: frames[i])
                 .resizable()
-                .interpolation(.none) // keeps pixel art crisp
+                // Small frames are pixel art: keep them crisp. Big ones are illustrations: smooth them.
+                .interpolation(isPixelArt ? .none : .high)
                 .scaledToFit()
         }
     }
