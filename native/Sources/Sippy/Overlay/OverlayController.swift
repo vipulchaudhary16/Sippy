@@ -22,7 +22,7 @@ final class OverlayController {
     private var pending: [DispatchWorkItem] = []
     private(set) var isShowing = false
 
-    private let size = NSSize(width: 360, height: 430)
+    private let size = NSSize(width: 380, height: 500)
     private let walkInSeconds = 2.6
     private let sipSeconds = 2.2
     private let walkOutSeconds = 2.0

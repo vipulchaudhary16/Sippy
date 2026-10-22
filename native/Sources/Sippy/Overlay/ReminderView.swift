@@ -15,15 +15,15 @@ struct ReminderView: View {
             if showBubble {
                 bubble
                     .frame(width: 230)
-                    .position(x: 225, y: 120)
+                    .position(x: 255, y: 115)
                     .transition(.scale(scale: 0.3, anchor: .bottomLeading).combined(with: .opacity))
             }
 
             CharacterView(pose: state.pose, sprites: state.sprites)
-                .frame(width: 160, height: 230)
+                .frame(width: 210, height: 310)
                 .scaleEffect(x: state.facingLeft ? -1 : 1, y: 1)
         }
-        .frame(width: 360, height: 430)
+        .frame(width: 380, height: 500)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: state.stage)
     }
 
