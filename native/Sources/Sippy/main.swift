@@ -1,8 +1,9 @@
 import AppKit
 
-// Dev aid: `Sippy --render-previews <dir>` writes PNGs of each overlay pose and exits.
+// Dev aid: `Sippy --render-previews <dir> [--builtin]` writes PNGs of each overlay pose and exits.
 if let i = CommandLine.arguments.firstIndex(of: "--render-previews"), i + 1 < CommandLine.arguments.count {
-    MainActor.assumeIsolated { renderPreviews(to: URL(fileURLWithPath: CommandLine.arguments[i + 1])) }
+    let builtin = CommandLine.arguments.contains("--builtin")
+    MainActor.assumeIsolated { renderPreviews(to: URL(fileURLWithPath: CommandLine.arguments[i + 1]), builtin: builtin) }
     exit(0)
 }
 

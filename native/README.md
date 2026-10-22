@@ -1,33 +1,13 @@
-# Sippy (native macOS)
+# Sippy: native macOS app
 
-A menu-bar app: every so often a little character walks onto your screen, sips
-some water, and asks whether you drank too. Answer **Yes, I drank!** to log a
-glass or **Snooze**. If you ignore it, it snoozes itself after a few minutes.
-
-Drink from a bottle instead of glasses? Settings → **How I drink → A bottle**: set the
-bottle size and a daily goal in litres, and the reminder asks how much you sipped
-(a few sips, ¼, ½ or the whole bottle).
-
-Built with Swift/SwiftUI using only the Xcode **Command Line Tools** (no Xcode needed).
-
-## Build & install
+This folder is the app: a Swift Package that builds with only the Xcode Command Line Tools.
 
 ```sh
-scripts/build.sh            # dist/Sippy.app + dist/Sippy.dmg
-scripts/build.sh --install  # also copies to /Applications and launches
-swift run SippyChecks       # core logic checks
+scripts/build.sh            # checks + dist/Sippy.app + dist/Sippy.dmg
+scripts/build.sh --install  # also installs to /Applications and launches
+swift run SippyChecks       # logic checks
+swift scripts/check_frames.swift   # validate custom character frames
 ```
 
-The app is ad-hoc signed. On another Mac, right-click → Open the first time.
-
-## Your own character
-
-Settings → **Open Character Folder** (`~/Library/Application Support/Sippy/Character`)
-and drop transparent PNGs facing right: `walk_0.png, walk_1.png…`, `idle_0.png…`,
-`sip_0.png…`, optionally `cheer_0.png…`, plus optional `appear.mp3` (plays once as she walks in) and `cheer.mp3` (plays when you log a glass). Picked up on the next reminder. Empty folder = built-in character.
-
-## Where things live
-
-- Settings: `defaults read com.vipulchaudhary.sippy`
-- Water log: `~/Library/Application Support/Sippy/intake.json` (millilitres per drink)
-- Art check without a screen: `.build/debug/Sippy --render-previews <dir>`
+See the [main README](../README.md), the [character guide](../docs/character-guide.md) and the
+[architecture notes](../docs/architecture.md).

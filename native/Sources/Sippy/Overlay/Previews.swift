@@ -3,8 +3,9 @@ import SippyCore
 import SwiftUI
 
 /// Renders the overlay in each stage to PNG, for checking the art without a live screen.
+/// `builtin` ignores the user's Character folder (for docs screenshots).
 @MainActor
-func renderPreviews(to dir: URL) {
+func renderPreviews(to dir: URL, builtin: Bool = false) {
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     var bottle = AppSettings()
     bottle.trackingMode = .bottle
@@ -20,7 +21,7 @@ func renderPreviews(to dir: URL) {
         state.stage = stage
         state.pose = pose
         state.message = message
-        state.sprites = SpriteSet.load()
+        state.sprites = builtin ? SpriteSet() : SpriteSet.load()
         state.options = Amounts(settings).drinkOptions
         let view = ReminderView(state: state, onDrink: { _ in }, onSnooze: {}, snoozeMinutes: { 10 })
             .background(Color(white: 0.85)) // stand-in for the desktop
