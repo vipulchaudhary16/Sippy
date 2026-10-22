@@ -17,7 +17,8 @@ final class OverlayState: ObservableObject {
 }
 
 /// Floating, transparent, always-on-top panel: the character walks in from the left or
-/// right edge of whichever screen the mouse is on, sips, asks, then walks back out.
+/// right edge, along the bottom or top, of whichever screen the mouse is on, sips, asks,
+/// then walks back out.
 /// Frames are drawn facing right, so coming from the right they're mirrored to face inward.
 final class OverlayController {
     private unowned let model: AppModel
@@ -42,9 +43,11 @@ final class OverlayController {
 
         let fromRight = model.settings.entrySide == .right
         let screen = currentScreen().visibleFrame
-        let start = NSRect(x: offscreenX(in: screen, fromRight: fromRight), y: screen.minY,
+        // visibleFrame already excludes the menu bar and Dock.
+        let y = model.settings.verticalPosition == .top ? screen.maxY - size.height : screen.minY
+        let start = NSRect(x: offscreenX(in: screen, fromRight: fromRight), y: y,
                            width: size.width, height: size.height)
-        let target = NSRect(x: fromRight ? screen.maxX - size.width - 24 : screen.minX + 24, y: screen.minY,
+        let target = NSRect(x: fromRight ? screen.maxX - size.width - 24 : screen.minX + 24, y: y,
                             width: size.width, height: size.height)
 
         state.sprites = SpriteSet.load()

@@ -71,6 +71,11 @@ struct SettingsView: View {
                     Text("Right").tag(EntrySide.right)
                 }
                 .pickerStyle(.segmented)
+                Picker("Walks along the", selection: binding(\.verticalPosition)) {
+                    Text("Bottom").tag(VerticalPosition.bottom)
+                    Text("Top").tag(VerticalPosition.top)
+                }
+                .pickerStyle(.segmented)
                 Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, and **cheer.mp3** for when you log a drink. Leave the folder empty to use the built-in one.")
                     .font(.callout)
                     .foregroundStyle(.secondary)

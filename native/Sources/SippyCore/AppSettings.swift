@@ -6,6 +6,12 @@ public enum EntrySide: String, Codable, CaseIterable {
     case right
 }
 
+/// Whether the character walks along the bottom of the screen or just under the menu bar.
+public enum VerticalPosition: String, Codable, CaseIterable {
+    case bottom
+    case top
+}
+
 public enum TrackingMode: String, Codable, CaseIterable {
     case glasses
     case bottle
@@ -26,6 +32,7 @@ public struct AppSettings: Codable, Equatable {
     public var bottleML: Int = 1000
     public var dailyGoalML: Int = 2500
     public var entrySide: EntrySide = .left
+    public var verticalPosition: VerticalPosition = .bottom
 
     public init() {}
 
@@ -63,6 +70,7 @@ public struct AppSettings: Codable, Equatable {
         bottleML = try c.decodeIfPresent(Int.self, forKey: .bottleML) ?? d.bottleML
         dailyGoalML = try c.decodeIfPresent(Int.self, forKey: .dailyGoalML) ?? d.dailyGoalML
         entrySide = try c.decodeIfPresent(EntrySide.self, forKey: .entrySide) ?? d.entrySide
+        verticalPosition = try c.decodeIfPresent(VerticalPosition.self, forKey: .verticalPosition) ?? d.verticalPosition
     }
 }
 

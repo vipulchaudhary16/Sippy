@@ -61,7 +61,8 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
 - **`OverlayController`**: the reminder itself:
   - A borderless, non-activating, transparent `NSPanel` at `.statusBar` level that
     joins all Spaces and full-screen apps, so it never steals keyboard focus.
-  - Positioned at the bottom-left of the screen under the mouse. The walk is the *window* moving
+  - Positioned in the corner chosen in Settings (`entrySide` left/right × `verticalPosition`
+    bottom/top) of the screen under the mouse. Coming from the right mirrors the frames and flips the bubble. The walk is the *window* moving
     (`NSAnimationContext`), while the sprite plays the walk cycle.
   - Sequence: walk in 2.6 s → sip 2.2 s → ask → (answer) → 1.8 s cheer/ack → walk out 2 s.
     Auto-snoozes after `autoSnoozeMinutes` with no answer.
