@@ -11,9 +11,19 @@ struct CharacterView: View {
     let pose: CharacterPose
     let sprites: SpriteSet
 
+    /// Brisk steps, slow gulps, bouncy cheer.
+    private var fps: Double {
+        switch pose {
+        case .walking: return 8
+        case .sipping: return 2
+        case .cheering: return 3
+        case .idle: return 4
+        }
+    }
+
     var body: some View {
         if let frames = sprites.frames(for: pose) {
-            SpriteView(frames: frames, fps: pose == .walking ? 8 : 4, blinks: pose == .idle)
+            SpriteView(frames: frames, fps: fps, blinks: pose == .idle)
         } else {
             DrawnCharacter(pose: pose)
         }
