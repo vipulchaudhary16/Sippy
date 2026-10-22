@@ -54,6 +54,13 @@ If you're away, the character snoozes on their own after a few minutes rather th
   <img src="docs/images/menubar.png" width="200" alt="Menu bar glass icon on light and dark bars">
 </p>
 
+<p align="center">
+  <img src="docs/images/dashboard.png" width="380" alt="Dashboard: today's progress, streak, 7-day chart and history">
+  &nbsp;
+  <img src="docs/images/settings.png" width="380" alt="Settings: how I drink, reminders, music, character, open at login">
+</p>
+<p align="center"><sub>Dashboard and Settings (bottle mode, dark appearance)</sub></p>
+
 ## Install
 
 **Requirements:** macOS 13 Ventura or later. Apple silicon or Intel (builds for the Mac you build on).
