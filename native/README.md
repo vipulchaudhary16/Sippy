@@ -20,7 +20,7 @@ The app is ad-hoc signed. On another Mac, right-click → Open the first time.
 
 Settings → **Open Character Folder** (`~/Library/Application Support/Sippy/Character`)
 and drop transparent PNGs facing right: `walk_0.png, walk_1.png…`, `idle_0.png…`,
-`sip_0.png…`, optionally `cheer_0.png…`. Picked up on the next reminder. Empty folder = built-in character.
+`sip_0.png…`, optionally `cheer_0.png…`, plus an optional `cheer.mp3` that plays when you log a glass. Picked up on the next reminder. Empty folder = built-in character.
 
 ## Where things live
 

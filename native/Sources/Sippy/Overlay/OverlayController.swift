@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import SippyCore
 
 /// What the overlay is showing right now; drives `ReminderView`.
 final class OverlayState: ObservableObject {
@@ -73,6 +74,8 @@ final class OverlayController {
         state.stage = .answered
         if drank {
             model.drank()
+            let s = model.settings
+            model.audio.playEffect(AppPaths.cheerSound, volume: s.volume, muted: s.muted)
             let goal = model.settings.dailyGoal
             let today = model.todayCount
             state.pose = .cheering

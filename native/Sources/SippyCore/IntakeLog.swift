@@ -55,4 +55,11 @@ public enum AppPaths {
     public static var characterDirectory: URL {
         supportDirectory.appendingPathComponent("Character", isDirectory: true)
     }
+
+    /// cheer.mp3 / .m4a / .wav / .aiff in the Character folder plays when the user says they drank.
+    public static var cheerSound: URL? {
+        ["mp3", "m4a", "wav", "aiff", "aif", "caf"]
+            .map { characterDirectory.appendingPathComponent("cheer.\($0)") }
+            .first { FileManager.default.fileExists(atPath: $0.path) }
+    }
 }

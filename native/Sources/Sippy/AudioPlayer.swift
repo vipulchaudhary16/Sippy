@@ -25,6 +25,16 @@ final class AudioPlayer {
         player = p
     }
 
+    private var effect: AVAudioPlayer?
+
+    /// One-shot sound (e.g. the cheer). Missing file or mute means silence.
+    func playEffect(_ url: URL?, volume: Double, muted: Bool) {
+        guard !muted, let url, let p = try? AVAudioPlayer(contentsOf: url) else { return }
+        p.volume = Float(volume)
+        p.play()
+        effect = p
+    }
+
     func apply(volume: Double, muted: Bool) {
         player?.volume = muted ? 0 : Float(volume)
     }
