@@ -112,6 +112,8 @@ test("glasses mode speaks in glasses") {
     check(s.goalML == 2000)
     check(a.describe(250) == "1 glass", a.describe(250))
     check(a.describe(750) == "3 glasses", a.describe(750))
+    check(a.describe(375) == "1.5 glasses", a.describe(375))
+    check(a.format(8.0 / 7) == "1.1", a.format(8.0 / 7))
     check(a.progress(500) == "2 of 8 glasses", a.progress(500))
     check(a.drinkOptions == [DrinkOption(label: "Yes, I drank!", ml: 250)])
 }
@@ -123,7 +125,12 @@ test("bottle mode speaks in litres and bottle fractions") {
     s.dailyGoalML = 2500
     let a = Amounts(s)
     check(s.goalML == 2500)
-    check(a.progress(1250) == "1.3 of 2.5 L", a.progress(1250))
+    check(a.progress(1250) == "1.25 of 2.5 L", a.progress(1250))
+    // Today + remaining must add up to the goal on screen (0.3 + 2.3 used to show for 0.25 + 2.25).
+    check(a.progress(250) == "0.25 of 2.5 L", a.progress(250))
+    check(a.describe(2250) == "2.25 L", a.describe(2250))
+    check(a.format(250.0 / 7 / 1000) == "0.04", a.format(250.0 / 7 / 1000))
+    check(a.format(0) == "0", a.format(0))
     check(a.describe(2000) == "2 L", a.describe(2000))
     check(a.goalInBottles == "2½ bottles", a.goalInBottles)
     check(a.drinkOptions.map(\.ml) == [100, 250, 500, 1000])

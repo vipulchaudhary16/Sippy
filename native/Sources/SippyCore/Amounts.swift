@@ -37,17 +37,17 @@ public struct Amounts {
         switch settings.trackingMode {
         case .glasses:
             let n = value(ml)
-            return "\(Self.trim(n)) \(n == 1 ? "glass" : "glasses")"
+            return "\(format(n)) \(n == 1 ? "glass" : "glasses")"
         case .bottle:
-            return "\(Self.trim(value(ml))) L"
+            return "\(format(value(ml))) L"
         }
     }
 
     /// "3 of 8 glasses" / "1.2 of 2.5 L".
     public func progress(_ ml: Int) -> String {
         switch settings.trackingMode {
-        case .glasses: return "\(Self.trim(value(ml))) of \(settings.dailyGoal) glasses"
-        case .bottle: return "\(Self.trim(value(ml))) of \(Self.trim(value(settings.goalML))) L"
+        case .glasses: return "\(format(value(ml))) of \(settings.dailyGoal) glasses"
+        case .bottle: return "\(format(value(ml))) of \(format(value(settings.goalML))) L"
         }
     }
 
@@ -91,9 +91,13 @@ public struct Amounts {
             : DrinkOption(label: "Log ¼ Bottle", ml: settings.bottleML / 4)
     }
 
-    /// 3 -> "3", 1.25 -> "1.3", 2.0 -> "2".
-    static func trim(_ x: Double) -> String {
-        let rounded = (x * 10).rounded() / 10
-        return rounded == rounded.rounded() ? String(Int(rounded)) : String(format: "%.1f", rounded)
+    /// A display-unit value as text: litres keep two decimals so 0.25 + 2.25 still reads as 2.5,
+    /// glasses keep one. Trailing zeros are dropped (2.50 -> "2.5", 3.0 -> "3").
+    public func format(_ x: Double) -> String {
+        let places = settings.trackingMode == .bottle ? 2 : 1
+        var text = String(format: "%.\(places)f", x)
+        while text.contains("."), text.hasSuffix("0") { text.removeLast() }
+        if text.hasSuffix(".") { text.removeLast() }
+        return text == "-0" ? "0" : text
     }
 }

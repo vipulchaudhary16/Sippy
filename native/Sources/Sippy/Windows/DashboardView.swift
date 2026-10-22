@@ -42,7 +42,7 @@ struct DashboardView: View {
 
                 HStack(spacing: 12) {
                     StatTile(title: "Streak", value: "\(stats.streak(goalML: goalML)) 🔥", caption: "days at goal")
-                    StatTile(title: "7-day average", value: String(format: "%.1f", weekAverage), caption: "\(amounts.unitName) / day")
+                    StatTile(title: "7-day average", value: amounts.format(weekAverage), caption: "\(amounts.unitName) / day")
                     StatTile(title: "All time", value: amounts.describe(stats.allTimeML), caption: "logged")
                 }
 

@@ -27,7 +27,7 @@ struct SettingsView: View {
                     Stepper("Bottle size: **\(s.bottleML) ml**", value: binding(\.bottleML), in: 100...3000, step: 50)
                     Stepper("Daily goal: **\(String(format: "%g", Double(s.dailyGoalML) / 1000)) L** (\(Amounts(s).goalInBottles))",
                             value: binding(\.dailyGoalML), in: 250...10000, step: 250)
-                    Text("When she asks, tap how much you sipped: a few sips, ¼, ½ or the whole bottle.")
+                    Text("When the character asks, tap how much you sipped: a few sips, ¼, ½ or the whole bottle.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -43,7 +43,7 @@ struct SettingsView: View {
 
             Section("Music") {
                 if s.musicPaths.isEmpty {
-                    Text("No music yet, so she walks in quietly.").foregroundStyle(.secondary)
+                    Text("No music yet, so the character walks in quietly.").foregroundStyle(.secondary)
                 }
                 ForEach(s.musicPaths, id: \.self) { path in
                     HStack {
@@ -66,7 +66,7 @@ struct SettingsView: View {
             }
 
             Section("Character") {
-                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right. Add **appear.mp3** to play a sound when she walks in, and **cheer.mp3** for when you log a glass. Leave the folder empty to use the built-in one.")
+                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right. Add **appear.mp3** to play a sound when the character walks in, and **cheer.mp3** for when you log a drink. Leave the folder empty to use the built-in one.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
