@@ -63,7 +63,22 @@ If you're away, the character snoozes on their own after a few minutes rather th
 
 ## Install
 
-**Requirements:** macOS 13 Ventura or later. Apple silicon or Intel (builds for the Mac you build on).
+**Requirements:** macOS 13 Ventura or later, on Apple silicon or Intel.
+
+### Download
+
+1. Grab **`Sippy-x.y.z.dmg`** from the [latest release](https://github.com/vipulchaudhary16/Sippy/releases/latest).
+2. Open it and drag **Sippy** into **Applications**.
+3. Open Sippy. It isn't notarized by Apple (that needs a paid developer account), so macOS
+   blocks the first launch:
+   - **macOS 15 Sequoia and later:** click *Done*, then **System Settings → Privacy & Security**,
+     scroll down, and click **Open Anyway** next to Sippy.
+   - **macOS 13–14:** right-click Sippy in Applications → **Open** → **Open**.
+   - Or in Terminal: `xattr -dr com.apple.quarantine /Applications/Sippy.app`
+
+   You only do this once.
+
+On first launch the character comes out to say hi. Then look for the **glass icon in the menu bar**.
 
 ### Build it yourself (no Xcode needed)
 
@@ -75,14 +90,8 @@ cd Sippy/native
 scripts/build.sh --install   # checks, builds, installs to /Applications, launches
 ```
 
-Without `--install`, you get `native/dist/Sippy.app` and `native/dist/Sippy.dmg` to share.
-
-### First launch
-
-The app is ad-hoc signed, not notarized, so the first time macOS may say it "can't be opened".
-**Right-click Sippy.app → Open → Open**. After that it opens normally.
-
-On first launch the character comes out to say hi. Then look for the **glass icon in the menu bar**.
+Without `--install`, you get `native/dist/Sippy.app`, `Sippy.zip` and `Sippy.dmg`. A local build
+targets your Mac's architecture; `UNIVERSAL=1 scripts/build.sh` builds for both (needs full Xcode).
 
 ## Using Sippy
 
@@ -160,7 +169,16 @@ cd native
 swift run SippyChecks                                  # logic checks (13 checks)
 swift build && .build/debug/Sippy                      # run a debug build
 .build/debug/Sippy --render-previews /tmp/p --builtin  # render overlay stages to PNG
-scripts/build.sh                                       # release .app + .dmg
+scripts/build.sh                                       # release .app + .zip + .dmg
+```
+
+### Releasing
+
+Push a version tag and GitHub Actions builds a universal app and publishes the release with the
+`.dmg`, `.zip` and checksums attached ([workflow](.github/workflows/release.yml)):
+
+```sh
+git tag v1.0.1 && git push origin v1.0.1
 ```
 
 ## License

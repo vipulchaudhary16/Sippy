@@ -100,6 +100,13 @@ To reset everything: quit Sippy, delete the `Sippy` folder above, and run
 5. `codesign --sign -` (ad-hoc), then `hdiutil` makes `dist/Sippy.dmg` with an Applications link.
 6. `--install` replaces `/Applications/Sippy.app` and launches it.
 
+Builds also produce `dist/Sippy.zip`. Set `VERSION=x.y.z` to stamp the version, and
+`UNIVERSAL=1` for an arm64 + x86_64 binary (needs full Xcode).
+
+**Releases:** `.github/workflows/release.yml` runs on any `v*` tag on a `macos-15` runner. It runs
+`UNIVERSAL=1 scripts/build.sh` (checks included), names the files `Sippy-<version>.dmg/.zip`, writes
+`SHA256SUMS.txt`, and publishes a GitHub release with install instructions and auto-generated notes.
+
 For a version that opens without the right-click → Open step on other Macs, sign with a
 Developer ID certificate and notarize (`xcrun notarytool`). That needs an Apple Developer account.
 

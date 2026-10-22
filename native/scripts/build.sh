@@ -2,19 +2,25 @@
 # Builds Sippy.app (and Sippy.dmg) using only the Xcode Command Line Tools.
 #   scripts/build.sh            -> dist/Sippy.app + dist/Sippy.dmg
 #   scripts/build.sh --install  -> also copies the app to /Applications and launches it
+# Env: VERSION=1.2.0 sets the app version; UNIVERSAL=1 builds for Apple silicon + Intel
+#      (needs full Xcode, as on GitHub's macOS runners).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-VERSION="1.0.0"
+VERSION="${VERSION:-1.0.0}"
 DIST="dist"
 APP="$DIST/Sippy.app"
+ARCH_FLAGS=()
+if [[ "${UNIVERSAL:-0}" == "1" ]]; then
+    ARCH_FLAGS=(--arch arm64 --arch x86_64)
+fi
 
 echo "▸ Checking core logic"
 swift run -c release SippyChecks
 
 echo "▸ Building release binary"
-swift build -c release --product Sippy
-BIN="$(swift build -c release --show-bin-path)/Sippy"
+swift build -c release --product Sippy ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"}
+BIN="$(swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} --show-bin-path)/Sippy"
 
 echo "▸ Assembling $APP"
 rm -rf "$APP"
@@ -49,6 +55,10 @@ PLIST
 echo "▸ Signing (ad-hoc)"
 codesign --force --deep --sign - "$APP"
 
+echo "▸ Making Sippy.zip"
+rm -f "$DIST/Sippy.zip"
+ditto -c -k --keepParent "$APP" "$DIST/Sippy.zip"
+
 echo "▸ Making Sippy.dmg"
 STAGE="$(mktemp -d)"
 cp -R "$APP" "$STAGE/"
@@ -64,4 +74,5 @@ if [[ "${1:-}" == "--install" ]]; then
     open /Applications/Sippy.app
 fi
 
-echo "✓ Done: $APP and $DIST/Sippy.dmg"
+lipo -archs "$APP/Contents/MacOS/Sippy" | sed 's/^/▸ Architectures: /'
+echo "✓ Done: $APP, $DIST/Sippy.zip and $DIST/Sippy.dmg (v$VERSION)"
