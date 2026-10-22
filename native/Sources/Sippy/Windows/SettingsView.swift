@@ -25,7 +25,7 @@ struct SettingsView: View {
 
             Section("Music") {
                 if s.musicPaths.isEmpty {
-                    Text("No music yet. Sippy plays a little “ding” instead.").foregroundStyle(.secondary)
+                    Text("No music yet, so she walks in quietly.").foregroundStyle(.secondary)
                 }
                 ForEach(s.musicPaths, id: \.self) { path in
                     HStack {

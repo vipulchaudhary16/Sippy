@@ -2,7 +2,7 @@ import AVFoundation
 import AppKit
 
 /// Loops one of the user's music files while the character is on screen.
-/// With no music configured it plays a short glass "ding" instead.
+/// With no music configured the walk-in is silent.
 final class AudioPlayer {
     private var player: AVAudioPlayer?
 
@@ -10,12 +10,7 @@ final class AudioPlayer {
         stop()
         guard !muted else { return }
         let playable = paths.filter { FileManager.default.fileExists(atPath: $0) }
-        guard let path = playable.randomElement() else {
-            let ding = NSSound(named: "Glass")
-            ding?.volume = Float(volume)
-            ding?.play()
-            return
-        }
+        guard let path = playable.randomElement() else { return }
         // A missing or broken file just means no music, never a crash.
         guard let p = try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: path)) else { return }
         p.numberOfLoops = -1
