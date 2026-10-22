@@ -34,10 +34,13 @@ final class AudioPlayer {
         player?.volume = muted ? 0 : Float(volume)
     }
 
+    /// Fades out the music and any one-shot still playing (e.g. the walk-in sound).
     func stop() {
-        guard let p = player else { return }
+        for p in [player, effect].compactMap({ $0 }) {
+            p.setVolume(0, fadeDuration: 0.6)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { p.stop() }
+        }
         player = nil
-        p.setVolume(0, fadeDuration: 0.6)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { p.stop() }
+        effect = nil
     }
 }

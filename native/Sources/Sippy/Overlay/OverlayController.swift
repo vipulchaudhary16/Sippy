@@ -52,6 +52,7 @@ final class OverlayController {
 
         let s = model.settings
         model.audio.start(paths: s.musicPaths, volume: s.volume, muted: s.muted)
+        model.audio.playEffect(AppPaths.appearSound, volume: s.volume, muted: s.muted)
 
         animate(panel, to: target, seconds: walkInSeconds) { [weak self] in
             guard let self else { return }

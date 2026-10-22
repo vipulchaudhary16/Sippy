@@ -56,10 +56,16 @@ public enum AppPaths {
         supportDirectory.appendingPathComponent("Character", isDirectory: true)
     }
 
-    /// cheer.mp3 / .m4a / .wav / .aiff in the Character folder plays when the user says they drank.
-    public static var cheerSound: URL? {
+    /// appear.mp3 plays once as the character walks in.
+    public static var appearSound: URL? { sound(named: "appear") }
+
+    /// cheer.mp3 plays when the user says they drank.
+    public static var cheerSound: URL? { sound(named: "cheer") }
+
+    /// `<name>.mp3` / .m4a / .wav / .aiff / .caf in the Character folder.
+    private static func sound(named name: String) -> URL? {
         ["mp3", "m4a", "wav", "aiff", "aif", "caf"]
-            .map { characterDirectory.appendingPathComponent("cheer.\($0)") }
+            .map { characterDirectory.appendingPathComponent("\(name).\($0)") }
             .first { FileManager.default.fileExists(atPath: $0.path) }
     }
 }

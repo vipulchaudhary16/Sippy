@@ -48,7 +48,7 @@ struct SettingsView: View {
             }
 
             Section("Character") {
-                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right. Add **cheer.mp3** to play a sound when you log a glass. Leave the folder empty to use the built-in one.")
+                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right. Add **appear.mp3** to play a sound when she walks in, and **cheer.mp3** for when you log a glass. Leave the folder empty to use the built-in one.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
