@@ -124,7 +124,7 @@ struct SettingsView: View {
 
             case .character:
                 Section("Active character") {
-                    ActiveCharacterCard()
+                    ActiveCharacterCard(model: model)
                 }
                 Section("Character") {
                     Picker("Comes in from the", selection: binding(\.entrySide)) {
@@ -284,22 +284,31 @@ struct SettingsView: View {
 }
 
 /// Shows which character Sippy will use: the user's frames from the Character folder, or the
-/// built-in one. Lists each pose and sound, and what falls back when something is missing.
+/// built-in one. Click the picture to play each pose; click a sound to hear it.
 struct ActiveCharacterCard: View {
+    let model: AppModel
     @State private var sprites = SpriteSet()
     @State private var sounds: [String: Bool] = [:]
+    @State private var poseIndex = 0
+
+    private let poses: [(CharacterPose, String)] = [
+        (.idle, "Standing"), (.walking, "Walking"), (.sipping, "Sipping"), (.cheering, "Cheering"), (.knocking, "Knocking"),
+    ]
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            Group {
-                if let idle = sprites.frames(for: .idle)?.first {
-                    Image(nsImage: idle).resizable().interpolation(.high).scaledToFit()
-                } else {
-                    DrawnCharacter(pose: .idle).scaleEffect(0.5).frame(width: 80, height: 115)
-                }
+            VStack(spacing: 4) {
+                CharacterView(pose: poses[poseIndex].0, sprites: sprites)
+                    .frame(width: 210, height: 310)
+                    .scaleEffect(0.42)
+                    .frame(width: 90, height: 132)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.08)))
+                    .contentShape(Rectangle())
+                    .onTapGesture { poseIndex = (poseIndex + 1) % poses.count }
+                    .help("Click to see the next pose")
+                Text("\(poses[poseIndex].1) ›")
+                    .font(.caption2).foregroundStyle(.secondary)
             }
-            .frame(width: 80, height: 120)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.08)))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(sprites.isEmpty ? "Built-in character" : "Your custom character")
@@ -315,10 +324,10 @@ struct ActiveCharacterCard: View {
                     poseRow("Cheering", sprites.cheer.count, fallback: "standing frame")
                     poseRow("Knocking", sprites.knock.count, fallback: "standing frame")
                 }
-                HStack(spacing: 10) {
-                    soundTag("appear", "walk-in")
-                    soundTag("cheer", "cheer")
-                    soundTag("knock", "knock")
+                HStack(spacing: 8) {
+                    soundButton("appear", "Walk-in")
+                    soundButton("cheer", "Cheer")
+                    soundButton("knock", "Knock")
                 }
                 .padding(.top, 2)
                 Button("Reload") { reload() }.controlSize(.small).padding(.top, 2)
@@ -340,14 +349,25 @@ struct ActiveCharacterCard: View {
         .font(.caption)
     }
 
-    private func soundTag(_ file: String, _ label: String) -> some View {
+    /// Plays the sound at the current volume, even when muted, since this is a test.
+    private func soundButton(_ file: String, _ label: String) -> some View {
         let has = sounds[file] ?? false
         // Knocking has a built-in sound; the others are silent without a file.
-        let builtIn = file == "knock"
-        let text = has ? "\(label) sound" : (builtIn ? "built-in knock" : "no \(label) sound")
-        return Label(text, systemImage: has || builtIn ? "speaker.wave.2.fill" : "speaker.slash")
-            .font(.caption2)
-            .foregroundStyle(has ? .primary : .secondary)
+        let playable = has || file == "knock"
+        let title = has ? label : (file == "knock" ? "Knock (built-in)" : "No \(label.lowercased())")
+        return Button {
+            let volume = model.settings.volume
+            switch file {
+            case "knock": model.audio.playKnock(volume: volume, muted: false)
+            case "appear": model.audio.playEffect(AppPaths.appearSound, volume: volume, muted: false)
+            default: model.audio.playEffect(AppPaths.cheerSound, volume: volume, muted: false)
+            }
+        } label: {
+            Label(title, systemImage: playable ? "play.circle.fill" : "speaker.slash")
+        }
+        .controlSize(.small)
+        .disabled(!playable)
+        .help(playable ? "Play the \(label.lowercased()) sound" : "Add \(file).mp3 to the Character folder")
     }
 
     private func reload() {
