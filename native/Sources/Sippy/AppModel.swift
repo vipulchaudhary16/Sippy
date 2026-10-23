@@ -10,6 +10,8 @@ final class AppModel: ObservableObject {
     private var sessionLocked = false
     private var displayAsleep = false
     private var screenLocked: Bool { sessionLocked || displayAsleep }
+    /// Screen locked or asleep: nothing should pop up.
+    var isAway: Bool { screenLocked }
 
     let store = SettingsStore()
     let intakeLog = IntakeLog(fileURL: IntakeLog.defaultURL())
@@ -24,6 +26,7 @@ final class AppModel: ObservableObject {
     }()
     lazy var overlay = OverlayController(model: self)
     let toast = Toast()
+    lazy var calendar = CalendarWatcher(model: self)
 
     init() {
         settings = store.load()
@@ -38,6 +41,7 @@ final class AppModel: ObservableObject {
     func start() {
         scheduleNext(.interval)
         SpotlightActions.sync(settings)
+        calendar.start()
     }
 
     func scheduleNext(_ kind: ReminderKind) {
@@ -109,6 +113,7 @@ final class AppModel: ObservableObject {
     }
 
     func update(_ change: (inout AppSettings) -> Void) {
+        let old = settings
         var s = settings
         change(&s)
         s = s.clamped()
@@ -120,6 +125,9 @@ final class AppModel: ObservableObject {
         // A new interval or reminder hours apply right away rather than after the old timer runs out.
         if timingChanged && !overlay.isShowing { scheduleNext(.interval) }
         if actionsChanged { SpotlightActions.sync(s) }
+        if s.eventRemindersEnabled != old.eventRemindersEnabled || s.eventCalendarIDs != old.eventCalendarIDs {
+            calendar.refresh()
+        }
     }
 
     // MARK: - Screen lock

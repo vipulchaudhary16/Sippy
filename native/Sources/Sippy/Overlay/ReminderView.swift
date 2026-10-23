@@ -6,6 +6,8 @@ struct ReminderView: View {
     let onDrink: (Int) -> Void
     let onSnooze: () -> Void
     let snoozeMinutes: () -> Int
+    /// Calendar knock: true = join the meeting, false = got it.
+    var onEvent: (Bool) -> Void = { _ in }
 
     private let drinkBlue = Color(red: 0.2, green: 0.55, blue: 0.95)
 
@@ -39,7 +41,17 @@ struct ReminderView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if state.stage == .asking {
+            if state.stage == .asking, let event = state.event {
+                VStack(spacing: 8) {
+                    if event.joinURL != nil {
+                        Button { onEvent(true) } label: { Label("Join meeting", systemImage: "video.fill") }
+                            .buttonStyle(PillButton(fill: drinkBlue, text: .white))
+                    }
+                    Button { onEvent(false) } label: { Label("Got it", systemImage: "checkmark") }
+                        .buttonStyle(PillButton(fill: event.joinURL == nil ? drinkBlue : Color(white: 0.92),
+                                                text: event.joinURL == nil ? .white : Color(white: 0.25)))
+                }
+            } else if state.stage == .asking {
                 VStack(spacing: 8) {
                     if state.options.count == 1, let only = state.options.first {
                         Button { onDrink(only.ml) } label: { Label(only.label, systemImage: "drop.fill") }

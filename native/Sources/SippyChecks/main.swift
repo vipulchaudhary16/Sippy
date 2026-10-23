@@ -234,5 +234,43 @@ test("reminders outside active hours wait for the window to open") {
     check(ReminderPlan.fireDate(for: .interval, settings: s, now: at(1, 18, 30), calendar: cal) == at(1, 19, 15))
 }
 
+func event(_ id: String, _ start: Date, allDay: Bool = false, declined: Bool = false) -> UpcomingEvent {
+    UpcomingEvent(id: id, title: id, start: start, end: start.addingTimeInterval(1800), isAllDay: allDay, declined: declined)
+}
+
+test("event reminders fire at the lead time, once, and skip all-day and declined") {
+    let planner = EventReminderPlanner(leadMinutes: 5)
+    let standup = event("standup", at(1, 10, 30))
+    let events = [standup, event("holiday", at(1, 0), allDay: true), event("skip", at(1, 10, 30), declined: true)]
+    check(planner.due(events, now: at(1, 10, 24), alerted: []).isEmpty, "too early")
+    check(planner.due(events, now: at(1, 10, 25), alerted: []).map(\.id) == ["standup"])
+    check(planner.due(events, now: at(1, 10, 25), alerted: ["standup"]).isEmpty, "only once")
+    check(planner.due(events, now: at(1, 10, 31), alerted: []).map(\.id) == ["standup"], "late but within grace")
+    check(planner.due(events, now: at(1, 10, 33), alerted: []).isEmpty, "too late")
+    check(planner.next(events, now: at(1, 9))?.id == "standup")
+}
+
+test("events due together come soonest first") {
+    let planner = EventReminderPlanner(leadMinutes: 10)
+    let due = planner.due([event("b", at(1, 11, 5)), event("a", at(1, 11))], now: at(1, 10, 56), alerted: [])
+    check(due.map(\.id) == ["a", "b"])
+    check(EventText.headline(due, now: at(1, 10, 56)) == "Knock knock! 🚪\n“a” starts in 4 min\n(+1 more)",
+          EventText.headline(due, now: at(1, 10, 56)))
+}
+
+test("event wording") {
+    check(EventText.when(at(1, 10, 5), now: at(1, 10)) == "starts in 5 min")
+    check(EventText.when(at(1, 10), now: at(1, 10)) == "is starting now")
+    check(EventText.when(at(1, 10), now: at(1, 10, 1)) == "started 1 min ago")
+}
+
+test("meeting links are found in url, location, or notes") {
+    check(MeetingLink.find(in: [nil, "Room 4", "Join: https://us02web.zoom.us/j/123456?pwd=abc thanks"])?.absoluteString
+          == "https://us02web.zoom.us/j/123456?pwd=abc")
+    check(MeetingLink.find(in: ["https://meet.google.com/abc-defg-hij"])?.host == "meet.google.com")
+    check(MeetingLink.find(in: ["<https://teams.microsoft.com/l/meetup-join/19%3ameeting_x/0>"])?.host == "teams.microsoft.com")
+    check(MeetingLink.find(in: ["Lunch at the cafe", nil]) == nil)
+}
+
 print(failures == 0 ? "All checks passed." : "\(failures) check(s) failed.")
 exit(failures == 0 ? 0 : 1)

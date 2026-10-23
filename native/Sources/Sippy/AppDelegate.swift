@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private let todayItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let nextItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private let eventItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private lazy var logItem = NSMenuItem(title: "Log a Glass", action: #selector(logQuick), keyEquivalent: "l")
     private lazy var pauseItem = NSMenuItem(title: "Pause Reminders", action: #selector(togglePause), keyEquivalent: "p")
 
@@ -76,6 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         nextItem.isEnabled = false
         menu.addItem(todayItem)
         menu.addItem(nextItem)
+        eventItem.isEnabled = false
+        menu.addItem(eventItem)
         menu.addItem(.separator())
         menu.addItem(item("Remind Me Now", #selector(remindNow), "r"))
         logItem.target = self
@@ -98,6 +101,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         todayItem.title = "💧 Today: \(model.amounts.progress(model.todayML))"
+        if let event = model.calendar.nextEvent {
+            let time = event.start.formatted(date: .omitted, time: .shortened)
+            let day = Calendar.current.isDateInToday(event.start) ? "" : " tomorrow"
+            eventItem.title = "📅 \(event.title.isEmpty ? "Event" : event.title) at \(time)\(day)"
+            eventItem.isHidden = false
+        } else {
+            eventItem.isHidden = true
+        }
         logItem.title = model.amounts.quickLog.label
         pauseItem.state = model.paused ? .on : .off
         if model.paused {

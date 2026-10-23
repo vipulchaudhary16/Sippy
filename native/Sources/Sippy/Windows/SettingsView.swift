@@ -1,4 +1,5 @@
 import AppKit
+import EventKit
 import ServiceManagement
 import SwiftUI
 import SippyCore
@@ -6,6 +7,13 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject private var calendar: CalendarWatcher
+    @State private var calendarMessage: String?
+
+    init(model: AppModel) {
+        self.model = model
+        self.calendar = model.calendar
+    }
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var loginError: String?
 
@@ -40,6 +48,35 @@ struct SettingsView: View {
                     Text(hoursSummary)
                         .font(.caption).foregroundStyle(.secondary)
                 }
+            }
+
+            Section("Calendar") {
+                Toggle("Knock before my calendar events", isOn: eventToggle)
+                if s.eventRemindersEnabled && calendar.isAuthorized {
+                    Stepper("Knock **\(s.eventLeadMinutes) min** before", value: binding(\.eventLeadMinutes), in: 1...120)
+                    let _ = calendar.accessChanged
+                    ForEach(calendar.calendars, id: \.calendarIdentifier) { cal in
+                        Toggle(isOn: calendarBinding(cal.calendarIdentifier)) {
+                            HStack(spacing: 6) {
+                                Circle().fill(Color(nsColor: cal.color)).frame(width: 9, height: 9)
+                                Text(cal.title)
+                                Text(cal.source.title).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Button("Test knock") { calendar.testKnock() }
+                }
+                if let calendarMessage {
+                    Text(calendarMessage).font(.caption).foregroundStyle(.orange)
+                }
+                if calendar.isDenied {
+                    Button("Open Privacy Settings") {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!)
+                    }
+                }
+                Text("Uses the calendars in macOS Calendar. To include Google Calendar, add your Google account in System Settings → Internet Accounts. All-day and declined events are skipped.")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Reminders") {
@@ -110,6 +147,49 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(minWidth: 420, minHeight: 520)
+    }
+
+    /// Turning knocks on asks for Calendar access first.
+    private var eventToggle: Binding<Bool> {
+        Binding(
+            get: { model.settings.eventRemindersEnabled && !calendar.isDenied },
+            set: { on in
+                guard on else {
+                    model.update { $0.eventRemindersEnabled = false }
+                    return
+                }
+                if calendar.isAuthorized {
+                    calendarMessage = nil
+                    model.update { $0.eventRemindersEnabled = true }
+                    return
+                }
+                calendar.requestAccess { granted in
+                    calendarMessage = granted ? nil : "Sippy needs Calendar access. Allow it in System Settings → Privacy & Security → Calendars."
+                    model.update { $0.eventRemindersEnabled = granted }
+                }
+            }
+        )
+    }
+
+    /// Per-calendar checkbox. An empty list means "all", so the first untick lists the rest explicitly.
+    private func calendarBinding(_ id: String) -> Binding<Bool> {
+        Binding(
+            get: { model.settings.eventCalendarIDs.isEmpty || model.settings.eventCalendarIDs.contains(id) },
+            set: { on in
+                model.update { s in
+                    var ids = s.eventCalendarIDs.isEmpty ? calendar.calendars.map(\.calendarIdentifier) : s.eventCalendarIDs
+                    if on { if !ids.contains(id) { ids.append(id) } } else { ids.removeAll { $0 == id } }
+                    // Everything ticked again goes back to "all", so new calendars are included too;
+                    // nothing ticked is stored as a marker, since an empty list means "all".
+                    if ids.isEmpty {
+                        s.eventCalendarIDs = ["none"]
+                    } else {
+                        s.eventCalendarIDs = Set(ids) == Set(calendar.calendars.map(\.calendarIdentifier))
+                            ? [] : ids.filter { $0 != "none" }
+                    }
+                }
+            }
+        )
     }
 
     private var hoursSummary: String {

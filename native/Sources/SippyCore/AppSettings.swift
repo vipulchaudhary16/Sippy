@@ -39,6 +39,11 @@ public struct AppSettings: Codable, Equatable {
     public var activeToMinutes = 18 * 60
     /// Keep "Log Water" launchers in ~/Applications/Sippy Actions so Spotlight can find them.
     public var spotlightActions = true
+    /// Knock before calendar events (needs Calendar access).
+    public var eventRemindersEnabled = false
+    public var eventLeadMinutes = 5
+    /// Calendar identifiers to watch; empty means all.
+    public var eventCalendarIDs: [String] = []
 
     public init() {}
 
@@ -63,6 +68,7 @@ public struct AppSettings: Codable, Equatable {
         s.dailyGoalML = min(max(s.dailyGoalML, 250), 10000)
         s.activeFromMinutes = min(max(s.activeFromMinutes, 0), 24 * 60 - 1)
         s.activeToMinutes = min(max(s.activeToMinutes, 0), 24 * 60 - 1)
+        s.eventLeadMinutes = min(max(s.eventLeadMinutes, 1), 120)
         return s
     }
 
@@ -87,6 +93,9 @@ public struct AppSettings: Codable, Equatable {
         activeFromMinutes = try c.decodeIfPresent(Int.self, forKey: .activeFromMinutes) ?? d.activeFromMinutes
         activeToMinutes = try c.decodeIfPresent(Int.self, forKey: .activeToMinutes) ?? d.activeToMinutes
         spotlightActions = try c.decodeIfPresent(Bool.self, forKey: .spotlightActions) ?? d.spotlightActions
+        eventRemindersEnabled = try c.decodeIfPresent(Bool.self, forKey: .eventRemindersEnabled) ?? d.eventRemindersEnabled
+        eventLeadMinutes = try c.decodeIfPresent(Int.self, forKey: .eventLeadMinutes) ?? d.eventLeadMinutes
+        eventCalendarIDs = try c.decodeIfPresent([String].self, forKey: .eventCalendarIDs) ?? d.eventCalendarIDs
     }
 }
 

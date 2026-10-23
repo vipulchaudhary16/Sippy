@@ -48,6 +48,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.healthcare-fitness</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Sippy reads your upcoming events so its character can knock a few minutes before each one.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>Sippy reads your upcoming events so its character can knock a few minutes before each one.</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

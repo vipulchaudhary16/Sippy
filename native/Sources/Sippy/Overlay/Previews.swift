@@ -19,6 +19,7 @@ func renderPreviews(to dir: URL, builtin: Bool = false) {
         ("5-ask-bottle", .asking, .idle, "Psst! Water break time 💧\n(1.2 of 2.5 L so far today)", bottle),
         ("6-ask-right", .asking, .idle, "Psst! Water break time 💧\n(3 of 8 glasses so far today)", fromRight),
         ("7-walk-right", .arriving, .walking, "", fromRight),
+        ("8-knock", .asking, .knocking, "Knock knock! 🚪\n“Design review” starts in 5 min", AppSettings()),
     ]
     for (name, stage, pose, message, settings) in shots {
         let state = OverlayState()
@@ -29,6 +30,7 @@ func renderPreviews(to dir: URL, builtin: Bool = false) {
         state.options = Amounts(settings).drinkOptions
         state.fromRight = settings.entrySide == .right
         state.facingLeft = state.fromRight
+        if pose == .knocking { state.event = EventPrompt(joinURL: URL(string: "https://meet.google.com/abc-defg-hij")) }
         let view = ReminderView(state: state, onDrink: { _ in }, onSnooze: {}, snoozeMinutes: { 10 })
             .background(Color(white: 0.85)) // stand-in for the desktop
         let renderer = ImageRenderer(content: view)

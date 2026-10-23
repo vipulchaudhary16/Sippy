@@ -5,6 +5,18 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 Each release's notes on GitHub are taken from its section here, so add one before tagging.
 
+## [Unreleased]
+
+### Added
+- **Calendar knocks.** A few minutes before each event, the character walks in, knocks on your
+  screen with a knock sound, and tells you what's starting, with a **Join meeting** button for
+  Zoom, Google Meet, Teams, Webex and FaceTime links. Reads macOS Calendar, so Google, iCloud,
+  Outlook and Exchange calendars added in Internet Accounts work. Choose the lead time and which
+  calendars to watch; all-day and declined events are skipped. Off by default.
+- The menu shows your next event.
+- Custom characters can add `knock_0.png` / `knock_1.png` and `knock.mp3` (prompts in the
+  character guide).
+
 ## [1.2.0] - 2026-10-23
 
 ### Added

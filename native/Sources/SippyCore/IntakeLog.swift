@@ -80,6 +80,9 @@ public enum AppPaths {
     /// cheer.mp3 plays when the user says they drank.
     public static var cheerSound: URL? { sound(named: "cheer") }
 
+    /// knock.mp3 plays when the character knocks before a calendar event.
+    public static var knockSound: URL? { sound(named: "knock") }
+
     /// `<name>.mp3` / .m4a / .wav / .aiff / .caf in the Character folder.
     private static func sound(named name: String) -> URL? {
         ["mp3", "m4a", "wav", "aiff", "aif", "caf"]

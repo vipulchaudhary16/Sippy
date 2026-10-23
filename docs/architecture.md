@@ -88,6 +88,15 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
   restarts the reminder countdown, and `OverlayController.celebrate()` fades the character in at the
   centre of the screen, cheering with `cheer.mp3`, for ~2.5 s. If the character is mid-animation it
   falls back to a small `Toast` under the menu bar.
+- **`CalendarWatcher`**: reads events from macOS Calendar with EventKit (asks for Calendar access
+  the first time knocks are turned on; the `Info.plist` carries the usage text). It refreshes on
+  `EKEventStoreChanged` and every 3 minutes, looking 24 h ahead in the selected calendars, and maps
+  each occurrence to an `UpcomingEvent` (all-day and declined flags, a Zoom/Meet/Teams/Webex link found
+  by `MeetingLink`). Every 5 s, `EventReminderPlanner` (core) picks events whose start − lead time has
+  arrived (up to 2 min late, e.g. after unlocking) that haven't knocked yet. A water reminder that's
+  asking is snoozed so the meeting goes first. `OverlayController.showEvent` walks in, switches to the
+  `knocking` pose, plays `knock.mp3` or a generated knock (a WAV synthesised in `AudioPlayer`), and
+  offers **Join meeting** / **Got it**.
 - **`DashboardView`**: Swift Charts bar chart with a goal rule, stat tiles, history list, and logging.
 - **`SettingsView`**: a grouped `Form`. Every control writes through `AppModel.update`, which
   clamps, saves, and reschedules if the interval changed. *Open at login* uses `SMAppService.mainApp`.

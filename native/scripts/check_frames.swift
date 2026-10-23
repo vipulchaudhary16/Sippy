@@ -42,20 +42,20 @@ func analyse(_ url: URL) -> Frame? {
 
 let frames = files.compactMap(analyse)
 let reference = frames.first { $0.name.hasPrefix("idle_0") } ?? frames[0]
-let validName = try! NSRegularExpression(pattern: "^(idle|walk|sip|cheer)_[0-9]+\\.png$")
+let validName = try! NSRegularExpression(pattern: "^(idle|walk|sip|cheer|knock)_[0-9]+\\.png$")
 var problems = 0
 
 print("Reference: \(reference.name) (\(reference.width)x\(reference.height), feet at y=\(reference.feet))\n")
 for f in frames {
     var notes: [String] = []
     let range = NSRange(f.name.startIndex..., in: f.name)
-    if validName.firstMatch(in: f.name, range: range) == nil { notes.append("name should be idle_N / walk_N / sip_N / cheer_N .png") }
+    if validName.firstMatch(in: f.name, range: range) == nil { notes.append("name should be idle_N / walk_N / sip_N / cheer_N / knock_N .png") }
     if f.width != reference.width || f.height != reference.height { notes.append("canvas \(f.width)x\(f.height) differs from reference") }
     if f.clear < 0.2 { notes.append("background doesn't look transparent (\(Int(f.clear * 100))% clear)") }
     if f.partial > 0.1 { notes.append("lots of semi-transparent pixels (\(Int(f.partial * 100))%), may show a halo") }
     let drift = f.feet - reference.feet
     // Cheer frames may hop; everything else should stand on the same line.
-    if abs(drift) > 12 && !f.name.hasPrefix("cheer") { notes.append("feet \(abs(drift))px \(drift < 0 ? "higher" : "lower") than reference, will jump") }
+    if abs(drift) > 12 && !f.name.hasPrefix("cheer") && !f.name.hasPrefix("knock") { notes.append("feet \(abs(drift))px \(drift < 0 ? "higher" : "lower") than reference, will jump") }
     let mark = notes.isEmpty ? "✓" : "⚠︎"
     if !notes.isEmpty { problems += 1 }
     print("\(mark) \(f.name)  feet y=\(f.feet)  body x \(f.left)-\(f.right)  \(Int(f.clear * 100))% clear")

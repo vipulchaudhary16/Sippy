@@ -3,7 +3,7 @@ import SwiftUI
 import SippyCore
 
 enum CharacterPose: Equatable {
-    case walking, idle, sipping, cheering
+    case walking, idle, sipping, cheering, knocking
 }
 
 /// Shows the user's sprite frames when they've supplied them, otherwise the built-in drawn character.
@@ -17,6 +17,7 @@ struct CharacterView: View {
         case .walking: return 8
         case .sipping: return 2
         case .cheering: return 3
+        case .knocking: return 6
         case .idle: return 4
         }
     }
@@ -39,8 +40,9 @@ struct SpriteSet {
     var idle: [NSImage] = []
     var sip: [NSImage] = []
     var cheer: [NSImage] = []
+    var knock: [NSImage] = []
 
-    var isEmpty: Bool { walk.isEmpty && idle.isEmpty && sip.isEmpty && cheer.isEmpty }
+    var isEmpty: Bool { walk.isEmpty && idle.isEmpty && sip.isEmpty && cheer.isEmpty && knock.isEmpty }
 
     func frames(for pose: CharacterPose) -> [NSImage]? {
         // When a pose borrows the idle set, use only the eyes-open frame so it doesn't flicker.
@@ -51,6 +53,7 @@ struct SpriteSet {
         case .idle: set = idle.isEmpty ? Array(walk.prefix(1)) : idle
         case .sipping: set = sip.isEmpty ? still : sip
         case .cheering: set = cheer.isEmpty ? (idle.isEmpty ? sip : still) : cheer
+        case .knocking: set = knock.isEmpty ? still : knock
         }
         if set.isEmpty { return isEmpty ? nil : frames(for: .idle) }
         return set
@@ -64,7 +67,8 @@ struct SpriteSet {
                 .sorted { frameNumber($0) < frameNumber($1) }
                 .compactMap { NSImage(contentsOf: $0) }
         }
-        return SpriteSet(walk: frames("walk"), idle: frames("idle"), sip: frames("sip"), cheer: frames("cheer"))
+        return SpriteSet(walk: frames("walk"), idle: frames("idle"), sip: frames("sip"), cheer: frames("cheer"),
+                         knock: frames("knock"))
     }
 
     private static func frameNumber(_ url: URL) -> Int {
@@ -131,7 +135,9 @@ struct DrawnCharacter: View {
                 leg(angle: -swing).position(x: 94, y: 190)
 
                 // Back arm
-                arm(angle: walking ? -swing : (pose == .cheering ? 150 : 10)).position(x: 52, y: 142)
+                // Back arm: swings, cheers, or knocks on the screen with a quick tap-tap.
+                arm(angle: walking ? -swing : (pose == .cheering ? 150 : (pose == .knocking ? 165 + knockTap(t) : 10)))
+                    .position(x: 52, y: 142)
 
                 RoundedRectangle(cornerRadius: 22).fill(shirt).frame(width: 66, height: 64).position(x: 80, y: 160)
                 // Little water drop logo on the shirt
@@ -145,6 +151,12 @@ struct DrawnCharacter: View {
             .offset(y: bob)
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.7), value: pose)
+    }
+
+    /// Two quick taps, a pause, repeat: "knock-knock".
+    private func knockTap(_ t: Double) -> Double {
+        let phase = t.truncatingRemainder(dividingBy: 1.2)
+        return phase < 0.5 ? -abs(sin(phase * .pi * 4)) * 22 : 0
     }
 
     private func leg(angle: Double) -> some View {

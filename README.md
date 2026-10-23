@@ -55,6 +55,7 @@ If you're away, the character snoozes on their own after a few minutes rather th
 | 🚶 **Desktop character** | Walks in from any corner: bottom-left, bottom-right, top-left or top-right. Transparent, always-on-top, shows on every Space and over full-screen apps. Never steals keyboard focus from what you're typing in. |
 | ⏰ **Smart scheduling** | Custom interval and snooze. Optional **reminder hours** (e.g. 11:00–19:00, overnight ranges too) so it stays quiet outside your working day. Pauses while your screen is locked or asleep, and gives you a minute after you come back. Pause any time from the menu bar. |
 | 🥛 **Glasses or bottle** | Glass mode counts glasses toward a daily goal. **Bottle mode** tracks litres: answer with *a few sips*, *¼*, *½* or *whole bottle*. |
+| 🚪 **Calendar knocks** | A few minutes before each meeting the character walks in, knocks on your screen (knock-knock sound), and says *“Design review” starts in 5 min*, with a **Join meeting** button for Zoom/Meet/Teams links. Works with Google, iCloud, Outlook and other calendars in macOS Calendar. |
 | 🔎 **Log from Spotlight** | Drank at a random time? ⌘Space → type **log water** → Enter. The character pops up in the middle of the screen and cheers (with your "yay"), and the reminder countdown restarts. Also a `sippy://` link for Shortcuts, Raycast or Alfred. |
 | 📊 **Dashboard** | A glass that fills through the day, streak 🔥, 7-day average, a 7-day chart against your goal, and 30-day history. |
 | 🎨 **Your own character** | Drop in PNG frames (walk, idle, sip, cheer), e.g. a chibi of you or someone you love, made with AI. Full guide below. |
@@ -128,6 +129,12 @@ screen to cheer. (Turn off in Settings → General.)
   <br><sub>“log water” in Raycast. The same actions show up in Spotlight and Alfred.</sub>
 </p>
 
+**Calendar knocks:** Settings → **Calendar** → *Knock before my calendar events*, and allow Calendar
+access when macOS asks. Sippy reads the calendars in the macOS Calendar app, so for **Google Calendar**
+add your Google account in System Settings → Internet Accounts first. Choose how many minutes before,
+and tick the calendars to watch. All-day and declined events are skipped, and a meeting takes
+priority over a water reminder. *Test knock* shows you what it looks like.
+
 **Links for automation:** `sippy://log?amount=glass`, `sips`, `quarter`, `half`, `bottle`, or a number of
 millilitres like `sippy://log?amount=330`. Use them from the Shortcuts app, Raycast, Alfred,
 Stream Deck, or Terminal (`open "sippy://log?amount=half"`).
@@ -137,6 +144,7 @@ Stream Deck, or Terminal (`open "sippy://log?amount=half"`).
 | Section | What you can change |
 |---|---|
 | How I drink | Glasses (glass size, goal in glasses) or a bottle (bottle size, goal in litres) |
+| Calendar | Knock before events, how many minutes before, and which calendars to watch (off by default) |
 | Reminder hours | Only remind between set times, e.g. 11:00–19:00 (off by default) |
 | Reminders | Interval, snooze length, auto-snooze after no answer, "show the reminder now" |
 | Music | Add songs that loop while the character is on screen, volume, mute |
@@ -154,8 +162,10 @@ frames and optional sounds in the **Character folder** (Settings → *Open Chara
 ├── walk_0.png … walk_3.png              walk cycle, facing right
 ├── sip_0.png    sip_1.png               drinking
 ├── cheer_0.png  cheer_1.png             celebrating
+├── knock_0.png  knock_1.png             knocking before a calendar event
 ├── appear.mp3                           plays once when the character walks in
-└── cheer.mp3                            plays when you log a drink
+├── cheer.mp3                            plays when you log a drink
+└── knock.mp3                            plays when knocking (a knock is built in)
 ```
 
 Every file is optional: missing poses fall back to the idle frame, and an empty folder means the

@@ -22,6 +22,7 @@ The set takes about 10 generations and 20–30 minutes.
 | `walk_0.png` … `walk_3.png` | Walk cycle facing **right** | Walking in and out |
 | `sip_0.png`, `sip_1.png` | Bottle at lips, then tipped up | Sipping |
 | `cheer_0.png`, `cheer_1.png` | Arms up, then a little jump | After you log a drink |
+| `knock_0.png`, `knock_1.png` | Fist raised, then knocking | Before a calendar event |
 
 **Minimum viable character:** just `idle_0.png`. Every missing pose falls back to it, so you can
 start with one image and add the rest whenever.
@@ -63,6 +64,8 @@ well and can output transparent PNGs.
 | 8 | `sip_1.png` | `idle_0.png` + `sip_0.png` |
 | 9 | `cheer_0.png` | `idle_0.png` |
 | 10 | `cheer_1.png` | `idle_0.png` + `cheer_0.png` |
+| 11 | `knock_0.png` | `idle_0.png` |
+| 12 | `knock_1.png` | `idle_0.png` + `knock_0.png` |
 
 **Why this way?**
 - `idle_0.png` goes in **every time**. It locks the face and outfit.
@@ -270,6 +273,45 @@ Body the same size as image 2, horizontally in the same spot. Keep everything
 inside the canvas. Transparent background, 1024x1536, no shadow, no text.
 ```
 
+### 11 → `knock_0.png` (ready to knock)
+
+*Attach: `idle_0.png`.*
+
+```
+Image 1 is the character reference. Same character, same outfit, same size,
+same canvas, same standing position and front three-quarter view as image 1.
+
+They are about to knock on a door that is right in front of the viewer (as if
+knocking on the inside of the computer screen): one arm raised in front of
+their chest with a loose fist, knuckles facing the viewer, elbow bent. Playful,
+cheeky expression: eyebrows up, small open-mouth smile, eyes looking at the
+viewer. The water bottle hangs in their other hand at their side.
+
+Feet in exactly the same spot and height as image 1, body the same size.
+Transparent background, 1024x1536, no shadow, no text, no door drawn.
+```
+
+### 12 → `knock_1.png` (knock!)
+
+*Attach: `idle_0.png` + `knock_0.png`.*
+
+```
+Image 1 is the character reference. Image 2 is the previous animation frame —
+match its size, position, camera angle, and expression exactly, only change the
+arm.
+
+Same character, same outfit, same canvas. The fist has moved forward toward the
+viewer, mid-knock, knuckles hitting the inside of the screen. Add two or three
+small curved impact lines around the fist to show the knock. Everything else
+identical to image 2.
+
+Feet in exactly the same spot and height as image 2. Transparent background,
+1024x1536, no shadow, no text, no door drawn.
+```
+
+> Sippy alternates the two frames quickly (6 per second) for a "knock-knock" while it plays the
+> knock sound, then switches to the idle frame. Without knock frames, it uses `idle_0.png`.
+
 ---
 
 ## Checking your frames
@@ -314,6 +356,7 @@ In the same folder:
 |---|---|---|
 | `appear.mp3` | Once, as the character walks in | Fades out when you answer. 3–10 s works well. |
 | `cheer.mp3` | When you log a drink | Short: the cheer lasts ~2 s. A "yay!" is perfect. |
+| `knock.mp3` | When knocking before a calendar event | A door knock, 1–2 s. Without one, Sippy plays a built-in knock. |
 
 `.m4a`, `.wav`, `.aiff` and `.caf` work too. For longer background music that loops while the
 character is on screen, use **Settings → Music** instead. Free sound effects:
@@ -327,6 +370,7 @@ character is on screen, use **Settings → Music** instead. Free sound effects:
 | Sipping | `sip_*` | 2 fps (slow gulps) | `idle_0` |
 | Standing | `idle_0`, with `idle_1` flashed for ~0.2 s every 3.5 s | blink | first walk frame |
 | Cheering | `cheer_*` | 3 fps | `idle_0` |
+| Knocking | `knock_*` for ~2.4 s, then idle | 6 fps | `idle_0` |
 
 Frames over 256 px wide are smoothed when scaled down; small frames (pixel art) stay crisp.
 The character is drawn about 310 points tall.

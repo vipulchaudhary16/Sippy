@@ -14,6 +14,13 @@ final class OverlayState: ObservableObject {
     @Published var message = ""
     @Published var sprites = SpriteSet()
     @Published var options: [DrinkOption] = []
+    /// Set while knocking for a calendar event instead of a water reminder.
+    @Published var event: EventPrompt?
+}
+
+/// What the bubble offers for a calendar knock.
+struct EventPrompt: Equatable {
+    let joinURL: URL?
 }
 
 /// Floating, transparent, always-on-top panel: the character walks in from the left or
@@ -56,6 +63,7 @@ final class OverlayController {
         state.fromRight = fromRight
         state.facingLeft = fromRight
         state.options = model.amounts.drinkOptions
+        state.event = nil
         state.message = ReminderMessages.random(today: model.todayML == 0 ? nil : model.amounts.progress(model.todayML))
 
         let panel = makePanelIfNeeded()
@@ -81,9 +89,66 @@ final class OverlayController {
         }
     }
 
-    /// True while the character is on screen waiting for (or about to ask for) an answer.
+    /// True while the character is on screen waiting for (or about to ask for) a water answer.
     var isAwaitingAnswer: Bool {
-        isShowing && (state.stage == .asking || state.stage == .arriving)
+        isShowing && state.event == nil && (state.stage == .asking || state.stage == .arriving)
+    }
+
+    /// Walks in and knocks before calendar events. Returns false if the character is busy.
+    @discardableResult
+    func showEvent(_ events: [UpcomingEvent]) -> Bool {
+        guard !isShowing, let first = events.first else { return false }
+        isShowing = true
+        cancelPending()
+
+        let fromRight = model.settings.entrySide == .right
+        let screen = currentScreen().visibleFrame
+        let y = model.settings.verticalPosition == .top ? screen.maxY - size.height : screen.minY
+        let start = NSRect(x: offscreenX(in: screen, fromRight: fromRight), y: y, width: size.width, height: size.height)
+        let target = NSRect(x: fromRight ? screen.maxX - size.width - 24 : screen.minX + 24, y: y,
+                            width: size.width, height: size.height)
+
+        state.sprites = SpriteSet.load()
+        state.stage = .arriving
+        state.pose = .walking
+        state.fromRight = fromRight
+        state.facingLeft = fromRight
+        state.event = EventPrompt(joinURL: first.meetingLink)
+        state.message = EventText.headline(events, now: Date())
+
+        let panel = makePanelIfNeeded()
+        panel.setFrame(start, display: false)
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+
+        animate(panel, to: target, seconds: walkInSeconds) { [weak self] in
+            guard let self else { return }
+            let s = self.model.settings
+            self.state.pose = .knocking
+            self.state.stage = .asking
+            self.state.message = EventText.headline(events, now: Date())
+            self.model.audio.playKnock(volume: s.volume, muted: s.muted)
+            self.after(2.4) { if self.state.stage == .asking { self.state.pose = .idle } }
+            // Leave on their own after a while if nobody answers.
+            self.after(Double(s.autoSnoozeMinutes * 60)) {
+                if self.state.stage == .asking { self.answerEvent(join: false) }
+            }
+        }
+        return true
+    }
+
+    func answerEvent(join: Bool) {
+        guard isShowing, let prompt = state.event, state.stage == .asking || state.stage == .arriving else { return }
+        cancelPending()
+        state.stage = .answered
+        state.pose = .idle
+        if join, let url = prompt.joinURL {
+            NSWorkspace.shared.open(url)
+            state.message = "Joining… have a good one! 👋"
+        } else {
+            state.message = "Have a good one! 👋"
+        }
+        after(1.4) { [weak self] in self?.leave() }
     }
 
     /// `ml` is how much they drank; nil means snooze.
@@ -123,6 +188,7 @@ final class OverlayController {
         state.pose = .cheering
         state.message = cheerMessage()
         state.stage = .answered
+        state.event = nil
 
         let panel = makePanelIfNeeded()
         panel.setFrame(frame, display: false)
@@ -194,7 +260,8 @@ final class OverlayController {
             state: state,
             onDrink: { [weak self] ml in self?.answer(ml: ml) },
             onSnooze: { [weak self] in self?.answer(ml: nil) },
-            snoozeMinutes: { [weak self] in self?.model.settings.snoozeMinutes ?? 10 }
+            snoozeMinutes: { [weak self] in self?.model.settings.snoozeMinutes ?? 10 },
+            onEvent: { [weak self] join in self?.answerEvent(join: join) }
         ))
         panel = p
         return p
