@@ -182,7 +182,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let tabs = NSTabViewController()
             tabs.tabStyle = .toolbar
             for t in SettingsTab.allCases {
-                let item = NSTabViewItem(viewController: NSHostingController(rootView: SettingsView(model: model, tab: t)))
+                let item = NSTabViewItem(viewController: SafeAreaHost(SettingsView(model: model, tab: t), title: t.title,
+                                                                      size: NSSize(width: 500, height: 600)))
                 item.label = t.title
                 item.image = NSImage(systemSymbolName: t.symbol, accessibilityDescription: t.title)
                 item.identifier = t.rawValue
@@ -190,6 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             let w = NSWindow(contentViewController: tabs)
             w.styleMask = [.titled, .closable, .miniaturizable]
+            w.title = SettingsTab.water.title
             w.isReleasedWhenClosed = false
             w.center()
             windows["settings"] = w
@@ -217,5 +219,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }()
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+}
+
+/// Hosts a SwiftUI view pinned to the safe area, so a toolbar (the Settings tabs) never covers its top.
+final class SafeAreaHost<Content: View>: NSViewController {
+    private let content: Content
+    private let size: NSSize
+
+    init(_ content: Content, title: String, size: NSSize) {
+        self.content = content
+        self.size = size
+        super.init(nibName: nil, bundle: nil)
+        self.title = title
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func loadView() {
+        let container = NSView(frame: NSRect(origin: .zero, size: size))
+        let host = NSHostingView(rootView: content)
+        host.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(host)
+        let guide = container.safeAreaLayoutGuide
+        NSLayoutConstraint.activate([
+            host.topAnchor.constraint(equalTo: guide.topAnchor),
+            host.bottomAnchor.constraint(equalTo: guide.bottomAnchor),
+            host.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
+            host.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+        ])
+        view = container
+        preferredContentSize = size
     }
 }

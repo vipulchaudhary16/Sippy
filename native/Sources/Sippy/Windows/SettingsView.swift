@@ -123,6 +123,9 @@ struct SettingsView: View {
                 }
 
             case .character:
+                Section("Active character") {
+                    ActiveCharacterCard()
+                }
                 Section("Character") {
                     Picker("Comes in from the", selection: binding(\.entrySide)) {
                         Text("Left").tag(EntrySide.left)
@@ -183,7 +186,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 500, height: 600)
+        .frame(minWidth: 500, maxWidth: .infinity, minHeight: 520, maxHeight: .infinity)
     }
 
     /// Turning knocks on asks for Calendar access first.
@@ -277,5 +280,82 @@ struct SettingsView: View {
             loginError = "Couldn't change this: \(error.localizedDescription). Move Sippy to Applications and try again."
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+}
+
+/// Shows which character Sippy will use: the user's frames from the Character folder, or the
+/// built-in one. Lists each pose and sound, and what falls back when something is missing.
+struct ActiveCharacterCard: View {
+    @State private var sprites = SpriteSet()
+    @State private var sounds: [String: Bool] = [:]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            Group {
+                if let idle = sprites.frames(for: .idle)?.first {
+                    Image(nsImage: idle).resizable().interpolation(.high).scaledToFit()
+                } else {
+                    DrawnCharacter(pose: .idle).scaleEffect(0.5).frame(width: 80, height: 115)
+                }
+            }
+            .frame(width: 80, height: 120)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.08)))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(sprites.isEmpty ? "Built-in character" : "Your custom character")
+                    .font(.headline)
+                if sprites.isEmpty {
+                    Text("Drawn by Sippy. Add PNG frames to the Character folder to use your own.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    poseRow("Standing", sprites.idle.count, fallback: "—")
+                    poseRow("Walking", sprites.walk.count, fallback: "standing frame")
+                    poseRow("Sipping", sprites.sip.count, fallback: "standing frame")
+                    poseRow("Cheering", sprites.cheer.count, fallback: "standing frame")
+                    poseRow("Knocking", sprites.knock.count, fallback: "standing frame")
+                }
+                HStack(spacing: 10) {
+                    soundTag("appear", "walk-in")
+                    soundTag("cheer", "cheer")
+                    soundTag("knock", "knock")
+                }
+                .padding(.top, 2)
+                Button("Reload") { reload() }.controlSize(.small).padding(.top, 2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
+        .onAppear(perform: reload)
+    }
+
+    private func poseRow(_ name: String, _ count: Int, fallback: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: count > 0 ? "checkmark.circle.fill" : "circle.dashed")
+                .foregroundStyle(count > 0 ? .green : .secondary)
+            Text(name)
+            Text(count > 0 ? "\(count) frame\(count == 1 ? "" : "s")" : "uses \(fallback)")
+                .foregroundStyle(.secondary)
+        }
+        .font(.caption)
+    }
+
+    private func soundTag(_ file: String, _ label: String) -> some View {
+        let has = sounds[file] ?? false
+        // Knocking has a built-in sound; the others are silent without a file.
+        let builtIn = file == "knock"
+        let text = has ? "\(label) sound" : (builtIn ? "built-in knock" : "no \(label) sound")
+        return Label(text, systemImage: has || builtIn ? "speaker.wave.2.fill" : "speaker.slash")
+            .font(.caption2)
+            .foregroundStyle(has ? .primary : .secondary)
+    }
+
+    private func reload() {
+        sprites = SpriteSet.load()
+        sounds = [
+            "appear": AppPaths.appearSound != nil,
+            "cheer": AppPaths.cheerSound != nil,
+            "knock": AppPaths.knockSound != nil,
+        ]
     }
 }
