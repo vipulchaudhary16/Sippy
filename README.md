@@ -123,6 +123,11 @@ targets your Mac's architecture; `UNIVERSAL=1 scripts/build.sh` builds for both 
 *A Few Sips / ¼ / ½ / Whole Bottle* (bottle mode). Press Enter and it's logged. (Turn off in
 Settings → General.)
 
+<p align="center">
+  <img src="docs/images/log-water.png" width="560" alt="Typing 'log water' shows Log Water – ½ Bottle, ¼ Bottle, A Few Sips and Whole Bottle">
+  <br><sub>“log water” in Raycast. The same actions show up in Spotlight and Alfred.</sub>
+</p>
+
 **Links for automation:** `sippy://log?amount=glass`, `sips`, `quarter`, `half`, `bottle`, or a number of
 millilitres like `sippy://log?amount=330`. Use them from the Shortcuts app, Raycast, Alfred,
 Stream Deck, or Terminal (`open "sippy://log?amount=half"`).
