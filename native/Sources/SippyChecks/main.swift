@@ -262,6 +262,8 @@ test("event wording") {
     check(EventText.when(at(1, 10, 5), now: at(1, 10)) == "starts in 5 min")
     check(EventText.when(at(1, 10), now: at(1, 10)) == "is starting now")
     check(EventText.when(at(1, 10), now: at(1, 10, 1)) == "started 1 min ago")
+    check(EventText.when(at(1, 12, 30), now: at(1, 10)) == "starts in 2 h 30 min")
+    check(EventText.when(at(1, 11), now: at(1, 10)) == "starts in 1 h")
 }
 
 test("meeting links are found in url, location, or notes") {

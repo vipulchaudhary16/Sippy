@@ -112,13 +112,14 @@ targets your Mac's architecture; `UNIVERSAL=1 scripts/build.sh` builds for both 
 
 ## Using Sippy
 
-**Menu bar (glass icon)**
+**Menu bar (glass icon)** has two sections:
 
-- Today's progress and when the next reminder is due
-- **Remind Me Now** (⌘R): call the character immediately
-- **Log a Glass / Log ¼ Bottle** (⌘L): log without waiting for a reminder
-- **Pause Reminders** (⌘P)
-- **Dashboard…** (⌘D) and **Settings…** (⌘,)
+- **Water**: today's progress, when the next reminder is due, **Log a Glass / Log ¼ Bottle** (⌘L),
+  **Remind Me Now** (⌘R), **Pause Water Reminders** (⌘P)
+- **Meetings**: your remaining meetings today; click one with a video link to join it.
+  If knocks are off, **Set Up Meeting Knocks…** takes you straight to the settings.
+- **Dashboard…** (⌘D) shows *Up next* (today's meetings with Join buttons) and your water stats.
+  **Settings…** (⌘,) opens the settings.
 
 **Spotlight:** press ⌘Space and type **log water**. You'll see *Log Water – Glass* (glass mode) or
 *A Few Sips / ¼ / ½ / Whole Bottle* (bottle mode). Press Enter: it's logged, and the character pops up in the middle of the
@@ -139,17 +140,14 @@ priority over a water reminder. *Test knock* shows you what it looks like.
 millilitres like `sippy://log?amount=330`. Use them from the Shortcuts app, Raycast, Alfred,
 Stream Deck, or Terminal (`open "sippy://log?amount=half"`).
 
-**Settings**
+**Settings** has four tabs:
 
-| Section | What you can change |
+| Tab | What you can change |
 |---|---|
-| How I drink | Glasses (glass size, goal in glasses) or a bottle (bottle size, goal in litres) |
-| Calendar | Knock before events, how many minutes before, and which calendars to watch (off by default) |
-| Reminder hours | Only remind between set times, e.g. 11:00–19:00 (off by default) |
-| Reminders | Interval, snooze length, auto-snooze after no answer, "show the reminder now" |
-| Music | Add songs that loop while the character is on screen, volume, mute |
-| Character | Which corner the character comes from (left/right, bottom/top), and the Character folder for your own frames and sounds |
-| General | Open Sippy when you log in, "Log Water" actions in Spotlight |
+| 💧 Water | Glasses or bottle, sizes and daily goal; interval, snooze, auto-snooze; reminder hours (e.g. 11:00–19:00) |
+| 📅 Meetings | Knock before calendar events, how many minutes before, which calendars, test with your next event |
+| 🧍 Character | Which corner the character comes from, the Character folder, music, volume and mute |
+| ⚙️ General | "Log Water" actions in Spotlight, open at login |
 
 ## Make the character yours
 

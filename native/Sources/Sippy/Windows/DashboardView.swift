@@ -4,6 +4,12 @@ import SippyCore
 
 struct DashboardView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject private var calendar: CalendarWatcher
+
+    init(model: AppModel) {
+        self.model = model
+        self.calendar = model.calendar
+    }
 
     private var stats: WaterStats { model.stats }
     private var amounts: Amounts { model.amounts }
@@ -13,6 +19,12 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if model.settings.eventRemindersEnabled && calendar.isAuthorized {
+                    UpNextCard(events: calendar.upcomingToday(limit: 4), leadMinutes: model.settings.eventLeadMinutes)
+                }
+
+                Label("Water", systemImage: "drop.fill").font(.title3.bold()).foregroundStyle(.blue)
+
                 HStack(alignment: .center, spacing: 24) {
                     GlassGauge(fraction: Double(model.todayML) / Double(max(goalML, 1)))
                         .frame(width: 90, height: 130)
@@ -104,6 +116,52 @@ struct DashboardView: View {
         if bottleMode { return "\(amounts.describe(left)) more to reach today's goal." }
         return left <= model.settings.glassML ? "Just one more glass to go!" : "\(amounts.describe(left)) more to reach today's goal."
     }
+}
+
+/// Today's remaining meetings, with Join buttons for ones that have a call link.
+struct UpNextCard: View {
+    let events: [UpcomingEvent]
+    let leadMinutes: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label("Up next", systemImage: "calendar").font(.title3.bold()).foregroundStyle(.orange)
+                Spacer()
+                Text("Knocks \(leadMinutes) min before").font(.caption).foregroundStyle(.secondary)
+            }
+            if events.isEmpty {
+                Text("No more meetings today 🎉").foregroundStyle(.secondary)
+            }
+            ForEach(events, id: \.id) { event in
+                HStack(spacing: 12) {
+                    Text(event.start <= Date() ? "Now" : event.start.formatted(date: .omitted, time: .shortened))
+                        .font(.system(.body, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(event.start <= Date() ? .orange : .primary)
+                        .frame(width: 72, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(event.title.isEmpty ? "Event" : event.title).lineLimit(1)
+                        Text(EventText.when(event.start, now: Date()).capitalizedFirst)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if let link = event.meetingLink {
+                        Button { NSWorkspace.shared.open(link) } label: { Label("Join", systemImage: "video.fill") }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.orange)
+                            .controlSize(.small)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.orange.opacity(0.08)))
+    }
+}
+
+private extension String {
+    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }
 
 struct StatTile: View {

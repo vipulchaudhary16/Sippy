@@ -16,6 +16,14 @@ Each release's notes on GitHub are taken from its section here, so add one befor
 - The menu shows your next event.
 - Custom characters can add `knock_0.png` / `knock_1.png` and `knock.mp3` (prompts in the
   character guide).
+- *Test knock* uses your real next meeting.
+- Dashboard **Up next** card: today's remaining meetings with **Join** buttons.
+
+### Changed
+- **Settings has tabs:** Water, Meetings, Character, General.
+- **The menu has Water and Meetings sections.** Today's meetings are listed, and clicking one
+  with a video link joins it.
+- Far-off times read as hours, e.g. *starts in 2 h 30 min*.
 
 ## [1.2.0] - 2026-10-23
 

@@ -41,6 +41,23 @@ func renderPreviews(to dir: URL, builtin: Bool = false) {
         }
     }
 
+    // Dashboard "Up next" card with sample meetings.
+    let now = Date()
+    let sample = [
+        UpcomingEvent(id: "1", title: "Daily standup", start: now.addingTimeInterval(-120), end: now.addingTimeInterval(600),
+                      meetingLink: URL(string: "https://meet.google.com/abc-defg-hij")),
+        UpcomingEvent(id: "2", title: "Design review", start: now.addingTimeInterval(47 * 60), end: now.addingTimeInterval(107 * 60),
+                      meetingLink: URL(string: "https://zoom.us/j/123")),
+        UpcomingEvent(id: "3", title: "Lunch with Priya", start: now.addingTimeInterval(150 * 60), end: now.addingTimeInterval(210 * 60)),
+    ]
+    let card = UpNextCard(events: sample, leadMinutes: 5).frame(width: 500).padding(20).background(Color.white)
+    let cardRenderer = ImageRenderer(content: card)
+    cardRenderer.scale = 2
+    if let tiff = cardRenderer.nsImage?.tiffRepresentation,
+       let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+        try? png.write(to: dir.appendingPathComponent("upnext.png"))
+    }
+
     // Menu-bar icon, blown up 8x on light and dark bars.
     let icon = AppDelegate.glassIcon()
     let sheet = NSImage(size: NSSize(width: 320, height: 160), flipped: false) { _ in

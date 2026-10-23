@@ -5,13 +5,38 @@ import SwiftUI
 import SippyCore
 import UniformTypeIdentifiers
 
+enum SettingsTab: String, CaseIterable {
+    case water, meetings, character, general
+
+    var title: String {
+        switch self {
+        case .water: return "Water"
+        case .meetings: return "Meetings"
+        case .character: return "Character"
+        case .general: return "General"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .water: return "drop.fill"
+        case .meetings: return "calendar"
+        case .character: return "figure.wave"
+        case .general: return "gearshape"
+        }
+    }
+}
+
+/// One tab of the Settings window.
 struct SettingsView: View {
     @ObservedObject var model: AppModel
+    let tab: SettingsTab
     @ObservedObject private var calendar: CalendarWatcher
     @State private var calendarMessage: String?
 
-    init(model: AppModel) {
+    init(model: AppModel, tab: SettingsTab) {
         self.model = model
+        self.tab = tab
         self.calendar = model.calendar
     }
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -21,138 +46,144 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("How I drink") {
-                Picker("I drink from", selection: binding(\.trackingMode)) {
-                    Text("Glasses").tag(TrackingMode.glasses)
-                    Text("A bottle").tag(TrackingMode.bottle)
+            switch tab {
+            case .water:
+                Section("How I drink") {
+                    Picker("I drink from", selection: binding(\.trackingMode)) {
+                        Text("Glasses").tag(TrackingMode.glasses)
+                        Text("A bottle").tag(TrackingMode.bottle)
+                    }
+                    .pickerStyle(.segmented)
+                    if s.trackingMode == .glasses {
+                        Stepper("Glass size: **\(s.glassML) ml**", value: binding(\.glassML), in: 50...1000, step: 50)
+                        Stepper("Daily goal: **\(s.dailyGoal) glasses** (\(String(format: "%g", Double(s.goalML) / 1000)) L)",
+                                value: binding(\.dailyGoal), in: 1...30)
+                    } else {
+                        Stepper("Bottle size: **\(s.bottleML) ml**", value: binding(\.bottleML), in: 100...3000, step: 50)
+                        Stepper("Daily goal: **\(String(format: "%g", Double(s.dailyGoalML) / 1000)) L** (\(Amounts(s).goalInBottles))",
+                                value: binding(\.dailyGoalML), in: 250...10000, step: 250)
+                        Text("When the character asks, tap how much you sipped: a few sips, ¼, ½ or the whole bottle.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
-                .pickerStyle(.segmented)
-                if s.trackingMode == .glasses {
-                    Stepper("Glass size: **\(s.glassML) ml**", value: binding(\.glassML), in: 50...1000, step: 50)
-                    Stepper("Daily goal: **\(s.dailyGoal) glasses** (\(String(format: "%g", Double(s.goalML) / 1000)) L)",
-                            value: binding(\.dailyGoal), in: 1...30)
-                } else {
-                    Stepper("Bottle size: **\(s.bottleML) ml**", value: binding(\.bottleML), in: 100...3000, step: 50)
-                    Stepper("Daily goal: **\(String(format: "%g", Double(s.dailyGoalML) / 1000)) L** (\(Amounts(s).goalInBottles))",
-                            value: binding(\.dailyGoalML), in: 250...10000, step: 250)
-                    Text("When the character asks, tap how much you sipped: a few sips, ¼, ½ or the whole bottle.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
 
-            Section("Reminder hours") {
-                Toggle("Only remind me during set hours", isOn: binding(\.activeHoursEnabled))
-                if s.activeHoursEnabled {
-                    DatePicker("From", selection: timeBinding(\.activeFromMinutes), displayedComponents: .hourAndMinute)
-                    DatePicker("To", selection: timeBinding(\.activeToMinutes), displayedComponents: .hourAndMinute)
-                    Text(hoursSummary)
-                        .font(.caption).foregroundStyle(.secondary)
+                Section("Reminders") {
+                    Stepper("Remind me every **\(s.intervalMinutes) min**",
+                            value: binding(\.intervalMinutes), in: 1...240, step: s.intervalMinutes < 10 ? 1 : 5)
+                    Stepper("Snooze for **\(s.snoozeMinutes) min**", value: binding(\.snoozeMinutes), in: 1...120)
+                    Stepper("If I don't answer, snooze after **\(s.autoSnoozeMinutes) min**",
+                            value: binding(\.autoSnoozeMinutes), in: 1...30)
+                    Button("Show the reminder now") { model.remindNow() }
                 }
-            }
 
-            Section("Calendar") {
-                Toggle("Knock before my calendar events", isOn: eventToggle)
-                if s.eventRemindersEnabled && calendar.isAuthorized {
-                    Stepper("Knock **\(s.eventLeadMinutes) min** before", value: binding(\.eventLeadMinutes), in: 1...120)
-                    let _ = calendar.accessChanged
-                    ForEach(calendar.calendars, id: \.calendarIdentifier) { cal in
-                        Toggle(isOn: calendarBinding(cal.calendarIdentifier)) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(nsColor: cal.color)).frame(width: 9, height: 9)
-                                Text(cal.title)
-                                Text(cal.source.title).foregroundStyle(.secondary)
+                Section("Reminder hours") {
+                    Toggle("Only remind me during set hours", isOn: binding(\.activeHoursEnabled))
+                    if s.activeHoursEnabled {
+                        DatePicker("From", selection: timeBinding(\.activeFromMinutes), displayedComponents: .hourAndMinute)
+                        DatePicker("To", selection: timeBinding(\.activeToMinutes), displayedComponents: .hourAndMinute)
+                        Text(hoursSummary)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+            case .meetings:
+                Section("Meeting knocks") {
+                    Toggle("Knock before my calendar events", isOn: eventToggle)
+                    if s.eventRemindersEnabled && calendar.isAuthorized {
+                        Stepper("Knock **\(s.eventLeadMinutes) min** before", value: binding(\.eventLeadMinutes), in: 1...120)
+                        let _ = calendar.accessChanged
+                        ForEach(calendar.calendars, id: \.calendarIdentifier) { cal in
+                            Toggle(isOn: calendarBinding(cal.calendarIdentifier)) {
+                                HStack(spacing: 6) {
+                                    Circle().fill(Color(nsColor: cal.color)).frame(width: 9, height: 9)
+                                    Text(cal.title)
+                                    Text(cal.source.title).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        Button { calendar.testKnock() } label: {
+                            if let next = calendar.nextEventSummary {
+                                Text("Test knock with my next event: \(next)")
+                            } else {
+                                Text("Test knock (no events in the next 24 h, uses a pretend meeting)")
                             }
                         }
                     }
-                    Button { calendar.testKnock() } label: {
-                        if let next = calendar.nextEventSummary {
-                            Text("Test knock with my next event: \(next)")
-                        } else {
-                            Text("Test knock (no events in the next 24 h, uses a pretend meeting)")
+                    if let calendarMessage {
+                        Text(calendarMessage).font(.caption).foregroundStyle(.orange)
+                    }
+                    if calendar.isDenied {
+                        Button("Open Privacy Settings") {
+                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!)
                         }
                     }
+                    Text("Uses the calendars in macOS Calendar. To include Google Calendar, add your Google account in System Settings → Internet Accounts. All-day and declined events are skipped.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                if let calendarMessage {
-                    Text(calendarMessage).font(.caption).foregroundStyle(.orange)
-                }
-                if calendar.isDenied {
-                    Button("Open Privacy Settings") {
-                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!)
+
+            case .character:
+                Section("Character") {
+                    Picker("Comes in from the", selection: binding(\.entrySide)) {
+                        Text("Left").tag(EntrySide.left)
+                        Text("Right").tag(EntrySide.right)
+                    }
+                    .pickerStyle(.segmented)
+                    Picker("Walks along the", selection: binding(\.verticalPosition)) {
+                        Text("Bottom").tag(VerticalPosition.bottom)
+                        Text("Top").tag(VerticalPosition.top)
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, **cheer_0.png…** and **knock_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, **cheer.mp3** for when you log a drink, and **knock.mp3** for meeting knocks. Leave the folder empty to use the built-in one.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Open Character Folder") {
+                        let dir = AppPaths.characterDirectory
+                        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                        NSWorkspace.shared.open(dir)
                     }
                 }
-                Text("Uses the calendars in macOS Calendar. To include Google Calendar, add your Google account in System Settings → Internet Accounts. All-day and declined events are skipped.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
-            Section("Reminders") {
-                Stepper("Remind me every **\(s.intervalMinutes) min**",
-                        value: binding(\.intervalMinutes), in: 1...240, step: s.intervalMinutes < 10 ? 1 : 5)
-                Stepper("Snooze for **\(s.snoozeMinutes) min**", value: binding(\.snoozeMinutes), in: 1...120)
-                Stepper("If I don't answer, snooze after **\(s.autoSnoozeMinutes) min**",
-                        value: binding(\.autoSnoozeMinutes), in: 1...30)
-                Button("Show the reminder now") { model.remindNow() }
-            }
-
-            Section("Music") {
-                if s.musicPaths.isEmpty {
-                    Text("No music yet, so the character walks in quietly.").foregroundStyle(.secondary)
-                }
-                ForEach(s.musicPaths, id: \.self) { path in
+                Section("Sound") {
+                    if s.musicPaths.isEmpty {
+                        Text("Music loops while the character is on screen for a water reminder. None yet.").foregroundStyle(.secondary)
+                    }
+                    ForEach(s.musicPaths, id: \.self) { path in
+                        HStack {
+                            Image(systemName: FileManager.default.fileExists(atPath: path) ? "music.note" : "exclamationmark.triangle")
+                            Text((path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
+                            Spacer()
+                            Button(role: .destructive) {
+                                model.update { $0.musicPaths.removeAll { $0 == path } }
+                            } label: { Image(systemName: "minus.circle") }
+                                .buttonStyle(.borderless)
+                        }
+                    }
+                    Button("Add music files…", action: pickMusic)
                     HStack {
-                        Image(systemName: FileManager.default.fileExists(atPath: path) ? "music.note" : "exclamationmark.triangle")
-                        Text((path as NSString).lastPathComponent).lineLimit(1).truncationMode(.middle)
-                        Spacer()
-                        Button(role: .destructive) {
-                            model.update { $0.musicPaths.removeAll { $0 == path } }
-                        } label: { Image(systemName: "minus.circle") }
-                            .buttonStyle(.borderless)
+                        Image(systemName: "speaker.fill").foregroundStyle(.secondary)
+                        Slider(value: binding(\.volume), in: 0...1)
+                        Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
                     }
+                    Toggle("Mute", isOn: binding(\.muted))
                 }
-                Button("Add music files…", action: pickMusic)
-                HStack {
-                    Image(systemName: "speaker.fill").foregroundStyle(.secondary)
-                    Slider(value: binding(\.volume), in: 0...1)
-                    Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
-                }
-                Toggle("Mute", isOn: binding(\.muted))
-            }
 
-            Section("Character") {
-                Picker("Comes in from the", selection: binding(\.entrySide)) {
-                    Text("Left").tag(EntrySide.left)
-                    Text("Right").tag(EntrySide.right)
-                }
-                .pickerStyle(.segmented)
-                Picker("Walks along the", selection: binding(\.verticalPosition)) {
-                    Text("Bottom").tag(VerticalPosition.bottom)
-                    Text("Top").tag(VerticalPosition.top)
-                }
-                .pickerStyle(.segmented)
-                Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, and optionally **cheer_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, and **cheer.mp3** for when you log a drink. Leave the folder empty to use the built-in one.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Open Character Folder") {
-                    let dir = AppPaths.characterDirectory
-                    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                    NSWorkspace.shared.open(dir)
-                }
-            }
-
-            Section("General") {
-                Toggle("Show “Log Water” actions in Spotlight", isOn: binding(\.spotlightActions))
-                Text("Type “log water” in Spotlight (⌘Space) to log without opening Sippy. Logging resets the reminder countdown.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Toggle("Open Sippy when I log in", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { on in setLaunchAtLogin(on) }
-                if let loginError {
-                    Text(loginError).font(.caption).foregroundStyle(.red)
+            case .general:
+                Section("General") {
+                    Toggle("Show “Log Water” actions in Spotlight", isOn: binding(\.spotlightActions))
+                    Text("Type “log water” in Spotlight (⌘Space) to log without opening Sippy. Logging resets the reminder countdown.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Toggle("Open Sippy when I log in", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { on in setLaunchAtLogin(on) }
+                    if let loginError {
+                        Text(loginError).font(.caption).foregroundStyle(.red)
+                    }
                 }
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 420, minHeight: 520)
+        .frame(width: 500, height: 600)
     }
 
     /// Turning knocks on asks for Calendar access first.

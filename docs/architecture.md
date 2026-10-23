@@ -98,7 +98,9 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
   `knocking` pose, plays `knock.mp3` or a generated knock (a WAV synthesised in `AudioPlayer`), and
   offers **Join meeting** / **Got it**.
 - **`DashboardView`**: Swift Charts bar chart with a goal rule, stat tiles, history list, and logging.
-- **`SettingsView`**: a grouped `Form`. Every control writes through `AppModel.update`, which
+- **`SettingsView`**: one grouped `Form` per tab (`SettingsTab`: Water, Meetings, Character,
+  General), hosted in an `NSTabViewController` with toolbar-style tabs.
+  The menu is rebuilt in `menuWillOpen` with *Water* and *Meetings* sections. Every control writes through `AppModel.update`, which
   clamps, saves, and reschedules if the interval changed. *Open at login* uses `SMAppService.mainApp`.
 
 ## Files on disk

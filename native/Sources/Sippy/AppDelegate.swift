@@ -7,12 +7,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var windows: [String: NSWindow] = [:]
 
-    private let todayItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private let nextItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private let eventItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-    private lazy var logItem = NSMenuItem(title: "Log a Glass", action: #selector(logQuick), keyEquivalent: "l")
-    private lazy var pauseItem = NSMenuItem(title: "Pause Reminders", action: #selector(togglePause), keyEquivalent: "p")
-
     /// sippy:// links (Spotlight actions, Shortcuts, Raycast…). Also called when a link launches the app.
     func application(_ application: NSApplication, open urls: [URL]) {
         urls.forEach(model.handle(url:))
@@ -73,24 +67,91 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
-        todayItem.isEnabled = false
-        nextItem.isEnabled = false
-        menu.addItem(todayItem)
-        menu.addItem(nextItem)
-        eventItem.isEnabled = false
-        menu.addItem(eventItem)
-        menu.addItem(.separator())
+        menu.autoenablesItems = false
+        fill(menu)
+        return menu
+    }
+
+    /// The menu is rebuilt each time it opens so progress, timers and meetings are current.
+    func menuWillOpen(_ menu: NSMenu) {
+        menu.removeAllItems()
+        fill(menu)
+    }
+
+    private func fill(_ menu: NSMenu) {
+        // Water
+        menu.addItem(header("Water"))
+        menu.addItem(info("\(model.amounts.progress(model.todayML)) today", symbol: "drop.fill"))
+        menu.addItem(info(waterStatus, symbol: model.paused ? "pause.circle" : "clock"))
+        menu.addItem(item(model.amounts.quickLog.label, #selector(logQuick), "l"))
         menu.addItem(item("Remind Me Now", #selector(remindNow), "r"))
-        logItem.target = self
-        menu.addItem(logItem)
-        pauseItem.target = self
-        menu.addItem(pauseItem)
+        let pause = item("Pause Water Reminders", #selector(togglePause), "p")
+        pause.state = model.paused ? .on : .off
+        menu.addItem(pause)
+
+        // Meetings
+        menu.addItem(.separator())
+        menu.addItem(header("Meetings"))
+        if !model.settings.eventRemindersEnabled || !model.calendar.isAuthorized {
+            menu.addItem(item("Set Up Meeting Knocks…", #selector(openMeetingSettings), ""))
+        } else {
+            let today = model.calendar.upcomingToday(limit: 4)
+            if today.isEmpty {
+                menu.addItem(info("No more meetings today", symbol: "calendar"))
+            }
+            for event in today {
+                menu.addItem(meetingItem(event))
+            }
+            menu.addItem(info("Knocks \(model.settings.eventLeadMinutes) min before", symbol: "bell"))
+        }
+
         menu.addItem(.separator())
         menu.addItem(item("Dashboard…", #selector(openDashboard), "d"))
         menu.addItem(item("Settings…", #selector(openSettings), ","))
         menu.addItem(.separator())
         menu.addItem(item("Quit Sippy", #selector(quit), "q"))
-        return menu
+    }
+
+    private var waterStatus: String {
+        if model.paused { return "Reminders paused" }
+        guard let next = model.scheduler.nextFire else { return "Reminder on screen" }
+        let mins = max(0, Int(ceil(next.timeIntervalSinceNow / 60)))
+        if mins <= 1 { return "Next reminder in under a minute" }
+        if mins <= 90 { return "Next reminder in \(mins) min" }
+        // Far off, usually waiting for reminder hours to open: show the clock time.
+        let time = next.formatted(date: .omitted, time: .shortened)
+        let day = Calendar.current.isDateInToday(next) ? "" : (Calendar.current.isDateInTomorrow(next) ? " tomorrow" : "")
+        return "Next reminder at \(time)\(day)"
+    }
+
+    /// "3:30 PM  Design review", clickable to join when the meeting has a link.
+    private func meetingItem(_ event: UpcomingEvent) -> NSMenuItem {
+        let now = Date()
+        let time = event.start <= now ? "Now" : event.start.formatted(date: .omitted, time: .shortened)
+        let title = "\(time)  \(event.title.isEmpty ? "Event" : event.title)"
+        guard let link = event.meetingLink else {
+            return info(title, symbol: "calendar")
+        }
+        let i = item(title, #selector(joinMeeting(_:)), "")
+        i.representedObject = link
+        i.image = NSImage(systemSymbolName: "video.fill", accessibilityDescription: "Join")
+        i.toolTip = "Join \(link.host ?? "meeting")"
+        return i
+    }
+
+    private func header(_ title: String) -> NSMenuItem {
+        if #available(macOS 14.0, *) { return NSMenuItem.sectionHeader(title: title) }
+        let i = NSMenuItem(title: title.uppercased(), action: nil, keyEquivalent: "")
+        i.isEnabled = false
+        return i
+    }
+
+    /// A non-clickable status line with an icon.
+    private func info(_ title: String, symbol: String) -> NSMenuItem {
+        let i = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        i.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+        i.isEnabled = false
+        return i
     }
 
     private func item(_ title: String, _ action: Selector, _ key: String) -> NSMenuItem {
@@ -99,50 +160,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return i
     }
 
-    func menuWillOpen(_ menu: NSMenu) {
-        todayItem.title = "💧 Today: \(model.amounts.progress(model.todayML))"
-        if let event = model.calendar.nextEvent {
-            let time = event.start.formatted(date: .omitted, time: .shortened)
-            let day = Calendar.current.isDateInToday(event.start) ? "" : " tomorrow"
-            eventItem.title = "📅 \(event.title.isEmpty ? "Event" : event.title) at \(time)\(day)"
-            eventItem.isHidden = false
-        } else {
-            eventItem.isHidden = true
-        }
-        logItem.title = model.amounts.quickLog.label
-        pauseItem.state = model.paused ? .on : .off
-        if model.paused {
-            nextItem.title = "Reminders paused"
-        } else if let next = model.scheduler.nextFire {
-            let mins = max(0, Int(ceil(next.timeIntervalSinceNow / 60)))
-            if mins <= 1 {
-                nextItem.title = "Next reminder in under a minute"
-            } else if mins <= 90 {
-                nextItem.title = "Next reminder in \(mins) min"
-            } else {
-                // Far off, usually waiting for reminder hours to open: show the clock time.
-                let time = next.formatted(date: .omitted, time: .shortened)
-                let day = Calendar.current.isDateInToday(next) ? "" : (Calendar.current.isDateInTomorrow(next) ? " tomorrow" : "")
-                nextItem.title = "Next reminder at \(time)\(day)"
-            }
-        } else {
-            nextItem.title = "Reminder on screen"
-        }
-    }
-
     @objc private func remindNow() { model.remindNow() }
     @objc private func logQuick() { model.logFromAnywhere(ml: model.amounts.quickLog.ml) }
     @objc private func togglePause() { model.paused.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
+    @objc private func joinMeeting(_ sender: NSMenuItem) {
+        if let url = sender.representedObject as? URL { NSWorkspace.shared.open(url) }
+    }
 
     @objc private func openDashboard() {
-        present("dashboard", title: "Sippy", size: NSSize(width: 520, height: 600),
+        present("dashboard", title: "Sippy", size: NSSize(width: 560, height: 680),
                 view: DashboardView(model: model))
     }
 
-    @objc private func openSettings() {
-        present("settings", title: "Sippy Settings", size: NSSize(width: 480, height: 620),
-                view: SettingsView(model: model))
+    @objc private func openSettings() { showSettings(nil) }
+    @objc private func openMeetingSettings() { showSettings(.meetings) }
+
+    /// Settings with toolbar tabs (Water, Meetings, Character, General), like a standard Mac preferences window.
+    private func showSettings(_ tab: SettingsTab?) {
+        let window = windows["settings"] ?? {
+            let tabs = NSTabViewController()
+            tabs.tabStyle = .toolbar
+            for t in SettingsTab.allCases {
+                let item = NSTabViewItem(viewController: NSHostingController(rootView: SettingsView(model: model, tab: t)))
+                item.label = t.title
+                item.image = NSImage(systemSymbolName: t.symbol, accessibilityDescription: t.title)
+                item.identifier = t.rawValue
+                tabs.addTabViewItem(item)
+            }
+            let w = NSWindow(contentViewController: tabs)
+            w.styleMask = [.titled, .closable, .miniaturizable]
+            w.isReleasedWhenClosed = false
+            w.center()
+            windows["settings"] = w
+            return w
+        }()
+        if let tab, let tabs = window.contentViewController as? NSTabViewController,
+           let index = SettingsTab.allCases.firstIndex(of: tab) {
+            tabs.selectedTabViewItemIndex = index
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
     }
 
     private func present<V: View>(_ key: String, title: String, size: NSSize, view: V) {

@@ -58,14 +58,21 @@ public struct EventReminderPlanner {
 }
 
 public enum EventText {
-    /// "starts in 5 min" / "starts in 1 min" / "is starting now" / "started 1 min ago".
+    /// "starts in 5 min" / "starts in 2 h 30 min" / "is starting now" / "started 1 min ago".
     public static func when(_ start: Date, now: Date) -> String {
         let minutes = Int((start.timeIntervalSince(now) / 60).rounded())
         switch minutes {
-        case 1...: return "starts in \(minutes) min"
+        case 1...: return "starts in \(duration(minutes))"
         case 0: return "is starting now"
-        default: return "started \(-minutes) min ago"
+        default: return "started \(duration(-minutes)) ago"
         }
+    }
+
+    /// 45 -> "45 min", 60 -> "1 h", 150 -> "2 h 30 min".
+    static func duration(_ minutes: Int) -> String {
+        guard minutes >= 60 else { return "\(minutes) min" }
+        let h = minutes / 60, m = minutes % 60
+        return m == 0 ? "\(h) h" : "\(h) h \(m) min"
     }
 
     /// The bubble text for one or more events due together.

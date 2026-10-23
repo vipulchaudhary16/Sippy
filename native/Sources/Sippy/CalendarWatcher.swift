@@ -135,6 +135,17 @@ final class CalendarWatcher: ObservableObject {
                                                end: start.addingTimeInterval(1800))])
     }
 
+    /// Today's meetings that haven't ended yet (including one in progress), soonest first.
+    func upcomingToday(limit: Int) -> [UpcomingEvent] {
+        guard model.settings.eventRemindersEnabled, isAuthorized else { return [] }
+        let now = Date()
+        return events
+            .filter { !$0.isAllDay && !$0.declined && $0.end > now && Calendar.current.isDateInToday($0.start) }
+            .sorted { $0.start < $1.start }
+            .prefix(limit)
+            .map { $0 }
+    }
+
     /// "Standup at 10:30" for the test button, or nil when nothing is coming up.
     var nextEventSummary: String? {
         guard let next = nextEvent else { return nil }
