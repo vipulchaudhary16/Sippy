@@ -22,7 +22,7 @@ The set takes about 10 generations and 20–30 minutes.
 | `walk_0.png` … `walk_3.png` | Walk cycle facing **right** | Walking in and out |
 | `sip_0.png`, `sip_1.png` | Bottle at lips, then tipped up | Sipping |
 | `cheer_0.png`, `cheer_1.png` | Arms up, then a little jump | After you log a drink |
-| `knock_0.png`, `knock_1.png` | Fist raised, then knocking | Before a calendar event |
+| `knock_0.png`, `knock_1.png` | Fist raised, then knocking (no bottle) | Before a calendar event |
 
 **Minimum viable character:** just `idle_0.png`. Every missing pose falls back to it, so you can
 start with one image and add the rest whenever.
@@ -275,24 +275,24 @@ inside the canvas. Transparent background, 1024x1536, no shadow, no text.
 
 ### 11 → `knock_0.png` (ready to knock)
 
-*Attach: `idle_0.png`.*
+*Attach: `idle_0.png`. A fresh chat works best, since a long chat full of bottle poses tends to
+sneak the bottle back in.*
 
-Describe hands by **image side** (left/right of the picture), not the character's left/right;
-AI tools follow that much more reliably. This assumes the bottle is on the left side of your
-`idle_0.png` and the free hand on the right; swap the sides if yours is the other way round.
+Knocking is about a meeting, not water, so these frames have **no bottle**. Hands are described
+by **image side** (left/right of the picture), which AI tools follow more reliably than the
+character's left/right.
 
 ```
-Image 1 is the character reference. Copy it exactly (same character, outfit,
-size, canvas, standing position, camera angle) and change ONLY the free arm
-(the one not holding the bottle).
+Image 1 is the character reference. Same character, same face, hair, outfit,
+size, canvas, standing position and camera angle as image 1.
 
-- The arm on the LEFT side of the image, holding the water bottle down by the
-  hip, stays EXACTLY as in image 1. Do not move it, do not move the bottle.
-- The arm on the RIGHT side of the image is raised in front of the chest,
-  elbow bent, with an EMPTY closed fist, knuckles facing the viewer, ready to
-  knock on the inside of the computer screen.
-- The knocking hand holds nothing. There is only one water bottle, and it
-  stays in the other hand.
+IMPORTANT: in this pose there is NO water bottle anywhere. Remove the bottle
+completely. Both hands are empty. Do not draw a bottle, cup, or any object.
+
+Pose: the arm on the RIGHT side of the image is raised in front of the chest,
+elbow bent, with an empty closed fist, knuckles facing the viewer, ready to
+knock on the inside of the computer screen. The arm on the LEFT side of the
+image hangs relaxed at their side with an empty open hand.
 
 Expression: playful and cheeky, eyebrows raised, small open-mouth smile, eyes
 looking at the viewer.
@@ -301,23 +301,21 @@ Feet in exactly the same spot and height as image 1. Transparent background,
 1024x1536, no shadow, no text, no door drawn.
 ```
 
-> **Still knocking with the bottle?** Drop the bottle for this pose instead. Replace the three
-> bullet points with: *"In this pose they are NOT holding a water bottle: both hands are empty. The
-> arm on the RIGHT side of the image is raised in front of the chest, elbow bent, empty closed fist,
-> knuckles facing the viewer. The other arm hangs relaxed at their side."*
-
 ### 12 → `knock_1.png` (knock!)
 
 *Attach: `idle_0.png` + `knock_0.png`.*
 
 ```
-Image 1 is the character reference. Image 2 is the previous animation frame —
-copy image 2 exactly and change ONLY the raised fist.
+Image 1 is the character reference for the face and outfit only. Image 2 is
+the previous animation frame: copy image 2 exactly and change ONLY the raised
+fist.
 
-The raised, EMPTY fist moves forward toward the viewer, mid-knock, knuckles
-hitting the inside of the screen. Add two or three small curved impact lines
-around the fist to show the knock. The other arm, the water bottle (if image 2
-has one), the face, and everything else stay identical to image 2.
+There is NO water bottle anywhere, same as image 2. Both hands are empty.
+
+The raised fist moves forward toward the viewer, mid-knock, knuckles hitting
+the inside of the screen. Add two or three small curved impact lines around
+the fist to show the knock. The other arm, the face, and everything else stay
+identical to image 2.
 
 Feet in exactly the same spot and height as image 2. Transparent background,
 1024x1536, no shadow, no text, no door drawn.
