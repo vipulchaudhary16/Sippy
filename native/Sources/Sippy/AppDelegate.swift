@@ -182,8 +182,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let tabs = NSTabViewController()
             tabs.tabStyle = .toolbar
             for t in SettingsTab.allCases {
-                let item = NSTabViewItem(viewController: SafeAreaHost(SettingsView(model: model, tab: t), title: t.title,
-                                                                      size: NSSize(width: 500, height: 600)))
+                let host = SafeAreaHost(SettingsView(model: model, tab: t), title: t.title,
+                                        size: NSSize(width: 500, height: 600))
+                if t == .meetings {
+                    // Every visit to Meetings: if knocks are on but Calendar access is missing
+                    // (macOS forgets it when an update changes the signature), ask again.
+                    host.onAppear = { [weak self] in
+                        guard let calendar = self?.model.calendar, calendar.needsAccess else { return }
+                        calendar.requestAccess { _ in }
+                    }
+                }
+                let item = NSTabViewItem(viewController: host)
                 item.label = t.title
                 item.image = NSImage(systemSymbolName: t.symbol, accessibilityDescription: t.title)
                 item.identifier = t.rawValue
@@ -226,6 +235,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 final class SafeAreaHost<Content: View>: NSViewController {
     private let content: Content
     private let size: NSSize
+    /// Runs each time the view is shown, e.g. every time its tab is selected.
+    var onAppear: (() -> Void)?
 
     init(_ content: Content, title: String, size: NSSize) {
         self.content = content
@@ -250,5 +261,10 @@ final class SafeAreaHost<Content: View>: NSViewController {
         ])
         view = container
         preferredContentSize = size
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        onAppear?()
     }
 }

@@ -198,10 +198,6 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 520, maxHeight: .infinity)
-        .onAppear {
-            // After an update macOS may have forgotten the permission; ask again right away.
-            if tab == .meetings && calendar.needsAccess { askForCalendar() }
-        }
     }
 
     private func askForCalendar() {
