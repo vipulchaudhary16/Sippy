@@ -7,7 +7,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-VERSION="${VERSION:-1.1.0}"
+VERSION="${VERSION:-1.2.0}"
 DIST="dist"
 APP="$DIST/Sippy.app"
 ARCH_FLAGS=()

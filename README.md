@@ -174,6 +174,7 @@ swift native/scripts/check_frames.swift
 | Doc | For |
 |---|---|
 | [Character guide](docs/character-guide.md) | Making custom character art with AI image tools: every prompt, what to attach, how to check it |
+| [Changelog](CHANGELOG.md) | What changed in each version |
 | [Architecture](docs/architecture.md) | How the app is built: components, data files, scheduler, build pipeline, checks |
 | [Original design spec](docs/superpowers/specs/2026-07-04-sippy-water-reminder-design.md) | The first design (Flutter prototype, since replaced) |
 
@@ -204,12 +205,16 @@ scripts/build.sh                                       # release .app + .zip + .
 
 ### Releasing
 
-Push a version tag and GitHub Actions builds a universal app and publishes the release with the
-`.dmg`, `.zip` and checksums attached ([workflow](.github/workflows/release.yml)):
+1. Add a section for the new version to [CHANGELOG.md](CHANGELOG.md). It becomes the release notes.
+2. Bump `VERSION` in `native/scripts/build.sh`, commit, and push a tag:
 
 ```sh
-git tag v1.0.1 && git push origin v1.0.1
+git tag v1.2.1 && git push origin v1.2.1
 ```
+
+GitHub Actions builds a universal app and publishes the release with the changelog notes, install
+steps, `.dmg`, `.zip` and checksums ([workflow](.github/workflows/release.yml)). The run fails if the
+changelog has no entry for that version.
 
 ## License
 

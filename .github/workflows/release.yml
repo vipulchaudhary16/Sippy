@@ -1,5 +1,6 @@
 # Builds a universal Sippy.app and publishes a GitHub release when a version tag is pushed:
 #   git tag v1.0.0 && git push origin v1.0.0
+# Release notes come from that version's section in CHANGELOG.md (the run fails without one).
 name: Release
 
 on:
@@ -28,6 +29,9 @@ jobs:
             echo "VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
           fi
 
+      - name: Release notes from CHANGELOG.md
+        run: .github/scripts/release-notes.sh "$VERSION" > release-notes.md && cat release-notes.md
+
       - name: Build universal app
         working-directory: native
         env:
@@ -55,20 +59,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Sippy ${{ env.VERSION }}
-          generate_release_notes: true
-          body: |
-            ## Install
-
-            1. Download **Sippy-${{ env.VERSION }}.dmg** below and open it.
-            2. Drag **Sippy** into **Applications**.
-            3. Open it once. Sippy isn't notarized by Apple, so macOS will block the first launch:
-               - **macOS 15 Sequoia and later:** click *Done*, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to Sippy.
-               - **macOS 13–14:** right-click Sippy in Applications → **Open** → **Open**.
-               - Or in Terminal: `xattr -dr com.apple.quarantine /Applications/Sippy.app`
-            4. Look for the glass icon in your menu bar. The character comes out to say hi. 💧
-
-            Universal app (Apple silicon + Intel), macOS 13 Ventura or later.
-            Make it yours with the [character guide](https://github.com/vipulchaudhary16/Sippy/blob/main/docs/character-guide.md).
+          body_path: release-notes.md
           files: |
             native/dist/Sippy-*.dmg
             native/dist/Sippy-*.zip
