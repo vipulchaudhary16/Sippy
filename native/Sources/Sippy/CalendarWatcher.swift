@@ -7,7 +7,7 @@ import SippyCore
 final class CalendarWatcher: ObservableObject {
     private(set) var store = EKEventStore()
     private unowned let model: AppModel
-    private var events: [UpcomingEvent] = []
+    @Published private(set) var events: [UpcomingEvent] = []
     /// Occurrence id -> start, so an event knocks once; pruned as events pass.
     private var alerted: [String: Date] = [:]
     private var ticker: Timer?
@@ -122,10 +122,24 @@ final class CalendarWatcher: ObservableObject {
         }
     }
 
-    /// Settings → "Test knock": a pretend meeting starting after the lead time.
+    /// Settings → "Test knock": knock for the real next event (title, time, join link) without
+    /// marking it as alerted, or a pretend meeting when the next 24 h are empty.
     func testKnock() {
+        refresh()
+        if let next = nextEvent {
+            model.overlay.showEvent([next])
+            return
+        }
         let start = Date().addingTimeInterval(TimeInterval(model.settings.eventLeadMinutes * 60))
         model.overlay.showEvent([UpcomingEvent(id: "test", title: "Test meeting", start: start,
                                                end: start.addingTimeInterval(1800))])
+    }
+
+    /// "Standup at 10:30" for the test button, or nil when nothing is coming up.
+    var nextEventSummary: String? {
+        guard let next = nextEvent else { return nil }
+        let time = next.start.formatted(date: .omitted, time: .shortened)
+        let day = Calendar.current.isDateInToday(next.start) ? "" : " tomorrow"
+        return "\(next.title.isEmpty ? "Event" : next.title) at \(time)\(day)"
     }
 }

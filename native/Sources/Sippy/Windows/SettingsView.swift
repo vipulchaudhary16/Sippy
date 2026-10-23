@@ -64,7 +64,13 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    Button("Test knock") { calendar.testKnock() }
+                    Button { calendar.testKnock() } label: {
+                        if let next = calendar.nextEventSummary {
+                            Text("Test knock with my next event: \(next)")
+                        } else {
+                            Text("Test knock (no events in the next 24 h, uses a pretend meeting)")
+                        }
+                    }
                 }
                 if let calendarMessage {
                     Text(calendarMessage).font(.caption).foregroundStyle(.orange)
