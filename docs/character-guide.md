@@ -277,19 +277,34 @@ inside the canvas. Transparent background, 1024x1536, no shadow, no text.
 
 *Attach: `idle_0.png`.*
 
-```
-Image 1 is the character reference. Same character, same outfit, same size,
-same canvas, same standing position and front three-quarter view as image 1.
+Describe hands by **image side** (left/right of the picture), not the character's left/right;
+AI tools follow that much more reliably. This assumes the bottle is on the left side of your
+`idle_0.png` and the free hand on the right; swap the sides if yours is the other way round.
 
-They are about to knock on a door that is right in front of the viewer (as if
-knocking on the inside of the computer screen): one arm raised in front of
-their chest with a loose fist, knuckles facing the viewer, elbow bent. Playful,
-cheeky expression: eyebrows up, small open-mouth smile, eyes looking at the
-viewer. The water bottle hangs in their other hand at their side.
-
-Feet in exactly the same spot and height as image 1, body the same size.
-Transparent background, 1024x1536, no shadow, no text, no door drawn.
 ```
+Image 1 is the character reference. Copy it exactly (same character, outfit,
+size, canvas, standing position, camera angle) and change ONLY the free arm
+(the one not holding the bottle).
+
+- The arm on the LEFT side of the image, holding the water bottle down by the
+  hip, stays EXACTLY as in image 1. Do not move it, do not move the bottle.
+- The arm on the RIGHT side of the image is raised in front of the chest,
+  elbow bent, with an EMPTY closed fist, knuckles facing the viewer, ready to
+  knock on the inside of the computer screen.
+- The knocking hand holds nothing. There is only one water bottle, and it
+  stays in the other hand.
+
+Expression: playful and cheeky, eyebrows raised, small open-mouth smile, eyes
+looking at the viewer.
+
+Feet in exactly the same spot and height as image 1. Transparent background,
+1024x1536, no shadow, no text, no door drawn.
+```
+
+> **Still knocking with the bottle?** Drop the bottle for this pose instead. Replace the three
+> bullet points with: *"In this pose they are NOT holding a water bottle: both hands are empty. The
+> arm on the RIGHT side of the image is raised in front of the chest, elbow bent, empty closed fist,
+> knuckles facing the viewer. The other arm hangs relaxed at their side."*
 
 ### 12 → `knock_1.png` (knock!)
 
@@ -297,13 +312,12 @@ Transparent background, 1024x1536, no shadow, no text, no door drawn.
 
 ```
 Image 1 is the character reference. Image 2 is the previous animation frame —
-match its size, position, camera angle, and expression exactly, only change the
-arm.
+copy image 2 exactly and change ONLY the raised fist.
 
-Same character, same outfit, same canvas. The fist has moved forward toward the
-viewer, mid-knock, knuckles hitting the inside of the screen. Add two or three
-small curved impact lines around the fist to show the knock. Everything else
-identical to image 2.
+The raised, EMPTY fist moves forward toward the viewer, mid-knock, knuckles
+hitting the inside of the screen. Add two or three small curved impact lines
+around the fist to show the knock. The other arm, the water bottle (if image 2
+has one), the face, and everything else stay identical to image 2.
 
 Feet in exactly the same spot and height as image 2. Transparent background,
 1024x1536, no shadow, no text, no door drawn.
