@@ -13,6 +13,17 @@ public enum ReminderPlan {
         case .snooze: return TimeInterval(s.snoozeMinutes * 60)
         }
     }
+
+    /// When the next reminder should fire: after the delay, or when reminder hours next open
+    /// if that would land outside them.
+    public static func fireDate(for kind: ReminderKind, settings: AppSettings, now: Date = Date(),
+                                calendar: Calendar = .current) -> Date {
+        let candidate = now.addingTimeInterval(delay(for: kind, settings: settings))
+        guard let hours = settings.clamped().activeHours, !hours.contains(candidate, calendar: calendar) else {
+            return candidate
+        }
+        return hours.nextStart(after: candidate, calendar: calendar)
+    }
 }
 
 /// One pending reminder at a time. Uses wall-clock deadlines checked by a short
@@ -29,7 +40,11 @@ public final class ReminderScheduler {
     }
 
     public func schedule(after seconds: TimeInterval) {
-        nextFire = Date().addingTimeInterval(seconds)
+        schedule(at: Date().addingTimeInterval(seconds))
+    }
+
+    public func schedule(at date: Date) {
+        nextFire = date
         if ticker == nil {
             let t = Timer(timeInterval: 5, repeats: true) { [weak self] _ in self?.tick() }
             RunLoop.main.add(t, forMode: .common)

@@ -33,8 +33,16 @@ public struct AppSettings: Codable, Equatable {
     public var dailyGoalML: Int = 2500
     public var entrySide: EntrySide = .left
     public var verticalPosition: VerticalPosition = .bottom
+    /// Only remind between these times (minutes after midnight) when enabled.
+    public var activeHoursEnabled = false
+    public var activeFromMinutes = 9 * 60
+    public var activeToMinutes = 18 * 60
 
     public init() {}
+
+    public var activeHours: ActiveHours? {
+        activeHoursEnabled ? ActiveHours(from: activeFromMinutes, to: activeToMinutes) : nil
+    }
 
     public var goalML: Int {
         trackingMode == .glasses ? dailyGoal * glassML : dailyGoalML
@@ -51,6 +59,8 @@ public struct AppSettings: Codable, Equatable {
         s.glassML = min(max(s.glassML, 50), 1000)
         s.bottleML = min(max(s.bottleML, 100), 3000)
         s.dailyGoalML = min(max(s.dailyGoalML, 250), 10000)
+        s.activeFromMinutes = min(max(s.activeFromMinutes, 0), 24 * 60 - 1)
+        s.activeToMinutes = min(max(s.activeToMinutes, 0), 24 * 60 - 1)
         return s
     }
 
@@ -71,6 +81,9 @@ public struct AppSettings: Codable, Equatable {
         dailyGoalML = try c.decodeIfPresent(Int.self, forKey: .dailyGoalML) ?? d.dailyGoalML
         entrySide = try c.decodeIfPresent(EntrySide.self, forKey: .entrySide) ?? d.entrySide
         verticalPosition = try c.decodeIfPresent(VerticalPosition.self, forKey: .verticalPosition) ?? d.verticalPosition
+        activeHoursEnabled = try c.decodeIfPresent(Bool.self, forKey: .activeHoursEnabled) ?? d.activeHoursEnabled
+        activeFromMinutes = try c.decodeIfPresent(Int.self, forKey: .activeFromMinutes) ?? d.activeFromMinutes
+        activeToMinutes = try c.decodeIfPresent(Int.self, forKey: .activeToMinutes) ?? d.activeToMinutes
     }
 }
 

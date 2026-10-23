@@ -47,6 +47,9 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
   5 seconds. Because it compares against the clock rather than counting down, a reminder that
   came due while the Mac slept fires on wake instead of drifting. A `shouldHold` closure lets
   the app hold a due reminder (paused, screen locked, reminder already showing) without losing it.
+- **`ActiveHours`**: the optional daily window (minutes after midnight; `from > to` wraps past
+  midnight). `ReminderPlan.fireDate` schedules each reminder after the interval or snooze, or at the
+  window's next opening if it would land outside. The app also re-checks when a reminder comes due.
 
 ### `Sippy` (app)
 

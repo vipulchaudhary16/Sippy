@@ -39,7 +39,7 @@ final class AppModel: ObservableObject {
     }
 
     func scheduleNext(_ kind: ReminderKind) {
-        scheduler.schedule(after: ReminderPlan.delay(for: kind, settings: settings))
+        scheduler.schedule(at: ReminderPlan.fireDate(for: kind, settings: settings))
     }
 
     func remindNow() {
@@ -49,6 +49,12 @@ final class AppModel: ObservableObject {
     }
 
     private func onReminderDue() {
+        // Came due outside reminder hours (e.g. hours changed, or a post-unlock grace period)?
+        // Wait quietly for the window to open.
+        if let hours = settings.activeHours, !hours.contains(Date()) {
+            scheduler.schedule(at: hours.nextStart(after: Date()))
+            return
+        }
         overlay.show()
     }
 
@@ -77,12 +83,12 @@ final class AppModel: ObservableObject {
         var s = settings
         change(&s)
         s = s.clamped()
-        let intervalChanged = s.intervalMinutes != settings.intervalMinutes
+        let timingChanged = s.intervalMinutes != settings.intervalMinutes || s.activeHours != settings.activeHours
         settings = s
         store.save(s)
         audio.apply(volume: s.volume, muted: s.muted)
-        // A new interval applies right away rather than after the old one runs out.
-        if intervalChanged && !overlay.isShowing { scheduleNext(.interval) }
+        // A new interval or reminder hours apply right away rather than after the old timer runs out.
+        if timingChanged && !overlay.isShowing { scheduleNext(.interval) }
     }
 
     // MARK: - Screen lock

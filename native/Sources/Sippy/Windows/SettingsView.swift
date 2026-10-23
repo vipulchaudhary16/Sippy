@@ -32,6 +32,16 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Reminder hours") {
+                Toggle("Only remind me during set hours", isOn: binding(\.activeHoursEnabled))
+                if s.activeHoursEnabled {
+                    DatePicker("From", selection: timeBinding(\.activeFromMinutes), displayedComponents: .hourAndMinute)
+                    DatePicker("To", selection: timeBinding(\.activeToMinutes), displayedComponents: .hourAndMinute)
+                    Text(hoursSummary)
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+
             Section("Reminders") {
                 Stepper("Remind me every **\(s.intervalMinutes) min**",
                         value: binding(\.intervalMinutes), in: 1...240, step: s.intervalMinutes < 10 ? 1 : 5)
@@ -97,6 +107,27 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(minWidth: 420, minHeight: 520)
+    }
+
+    private var hoursSummary: String {
+        let from = ActiveHours.clock(s.activeFromMinutes), to = ActiveHours.clock(s.activeToMinutes)
+        if s.activeFromMinutes == s.activeToMinutes { return "Same start and end time means all day." }
+        let overnight = s.activeFromMinutes > s.activeToMinutes ? " (overnight)" : ""
+        return "Reminders only between \(from) and \(to)\(overnight). Outside these hours Sippy stays quiet; Remind Me Now still works."
+    }
+
+    /// Edits a minutes-after-midnight setting with a time picker.
+    private func timeBinding(_ keyPath: WritableKeyPath<AppSettings, Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                let minutes = model.settings[keyPath: keyPath]
+                return Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
+            },
+            set: { date in
+                let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                model.update { $0[keyPath: keyPath] = (parts.hour ?? 0) * 60 + (parts.minute ?? 0) }
+            }
+        )
     }
 
     private func binding<T>(_ keyPath: WritableKeyPath<AppSettings, T>) -> Binding<T> {

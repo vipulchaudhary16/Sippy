@@ -99,7 +99,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             nextItem.title = "Reminders paused"
         } else if let next = model.scheduler.nextFire {
             let mins = max(0, Int(ceil(next.timeIntervalSinceNow / 60)))
-            nextItem.title = mins <= 1 ? "Next reminder in under a minute" : "Next reminder in \(mins) min"
+            if mins <= 1 {
+                nextItem.title = "Next reminder in under a minute"
+            } else if mins <= 90 {
+                nextItem.title = "Next reminder in \(mins) min"
+            } else {
+                // Far off, usually waiting for reminder hours to open: show the clock time.
+                let time = next.formatted(date: .omitted, time: .shortened)
+                let day = Calendar.current.isDateInToday(next) ? "" : (Calendar.current.isDateInTomorrow(next) ? " tomorrow" : "")
+                nextItem.title = "Next reminder at \(time)\(day)"
+            }
         } else {
             nextItem.title = "Reminder on screen"
         }

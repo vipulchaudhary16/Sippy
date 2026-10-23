@@ -146,6 +146,7 @@ test("settings from before bottle mode load as glasses") {
     check(s.trackingMode == .glasses)
     check(s.entrySide == .left)
     check(s.verticalPosition == .bottom)
+    check(s.activeHours == nil, "reminder hours are off unless turned on")
     check(s.goalML == 1500)
 }
 
@@ -173,6 +174,43 @@ test("scheduler fires once when due, holds while held") {
     scheduler.tick(now: due.addingTimeInterval(20))
     check(fired == 1, "fires exactly once")
     check(scheduler.nextFire == nil)
+}
+
+func at(_ d: Int, _ h: Int, _ m: Int = 0) -> Date {
+    cal.date(from: DateComponents(year: 2026, month: 10, day: d, hour: h, minute: m))!
+}
+
+test("active hours: daytime window") {
+    let hours = ActiveHours(from: 11 * 60, to: 19 * 60)
+    check(!hours.contains(at(1, 10, 59), calendar: cal))
+    check(hours.contains(at(1, 11), calendar: cal))
+    check(hours.contains(at(1, 18, 59), calendar: cal))
+    check(!hours.contains(at(1, 19), calendar: cal), "end time is exclusive")
+    check(hours.nextStart(after: at(1, 8), calendar: cal) == at(1, 11), "same morning")
+    check(hours.nextStart(after: at(1, 20), calendar: cal) == at(2, 11), "next morning")
+    check(hours.nextStart(after: at(1, 11), calendar: cal) == at(2, 11), "strictly after")
+}
+
+test("active hours: overnight window and all-day") {
+    let night = ActiveHours(from: 22 * 60, to: 6 * 60)
+    check(night.contains(at(1, 23), calendar: cal))
+    check(night.contains(at(1, 3), calendar: cal))
+    check(!night.contains(at(1, 12), calendar: cal))
+    check(ActiveHours(from: 600, to: 600).contains(at(1, 3), calendar: cal))
+}
+
+test("reminders outside active hours wait for the window to open") {
+    var s = AppSettings()
+    s.intervalMinutes = 45
+    s.activeHoursEnabled = true
+    s.activeFromMinutes = 11 * 60
+    s.activeToMinutes = 19 * 60
+    check(ReminderPlan.fireDate(for: .interval, settings: s, now: at(1, 12), calendar: cal) == at(1, 12, 45))
+    check(ReminderPlan.fireDate(for: .interval, settings: s, now: at(1, 18, 30), calendar: cal) == at(2, 11),
+          "would land at 19:15, so tomorrow 11:00")
+    check(ReminderPlan.fireDate(for: .interval, settings: s, now: at(1, 7), calendar: cal) == at(1, 11))
+    s.activeHoursEnabled = false
+    check(ReminderPlan.fireDate(for: .interval, settings: s, now: at(1, 18, 30), calendar: cal) == at(1, 19, 15))
 }
 
 print(failures == 0 ? "All checks passed." : "\(failures) check(s) failed.")
