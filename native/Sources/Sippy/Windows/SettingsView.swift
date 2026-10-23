@@ -98,6 +98,9 @@ struct SettingsView: View {
             }
 
             Section("General") {
+                Toggle("Show “Log Water” actions in Spotlight", isOn: binding(\.spotlightActions))
+                Text("Type “log water” in Spotlight (⌘Space) to log without opening Sippy. Logging resets the reminder countdown.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Toggle("Open Sippy when I log in", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { on in setLaunchAtLogin(on) }
                 if let loginError {

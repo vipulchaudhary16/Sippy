@@ -12,6 +12,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private lazy var logItem = NSMenuItem(title: "Log a Glass", action: #selector(logQuick), keyEquivalent: "l")
     private lazy var pauseItem = NSMenuItem(title: "Pause Reminders", action: #selector(togglePause), keyEquivalent: "p")
 
+    /// sippy:// links (Spotlight actions, Shortcuts, Raycast…). Also called when a link launches the app.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        urls.forEach(model.handle(url:))
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = Self.glassIcon()
@@ -115,7 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func remindNow() { model.remindNow() }
-    @objc private func logQuick() { model.log(ml: model.amounts.quickLog.ml) }
+    @objc private func logQuick() { model.logFromAnywhere(ml: model.amounts.quickLog.ml) }
     @objc private func togglePause() { model.paused.toggle() }
     @objc private func quit() { NSApp.terminate(nil) }
 

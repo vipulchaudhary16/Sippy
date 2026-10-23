@@ -23,6 +23,7 @@ final class AppModel: ObservableObject {
         return s
     }()
     lazy var overlay = OverlayController(model: self)
+    let toast = Toast()
 
     init() {
         settings = store.load()
@@ -36,6 +37,7 @@ final class AppModel: ObservableObject {
 
     func start() {
         scheduleNext(.interval)
+        SpotlightActions.sync(settings)
     }
 
     func scheduleNext(_ kind: ReminderKind) {
@@ -74,6 +76,30 @@ final class AppModel: ObservableObject {
         entries = intakeLog.entries
     }
 
+    /// A drink logged outside the reminder (Spotlight action, sippy:// link, menu). If the
+    /// character is asking right now it counts as the answer; otherwise log, restart the
+    /// reminder countdown, and confirm with a toast.
+    func logFromAnywhere(ml: Int) {
+        if overlay.isAwaitingAnswer {
+            overlay.answer(ml: ml)
+            return
+        }
+        drank(ml: ml)
+        toast.show("Logged \(ml) ml · \(amounts.progress(todayML)) today")
+    }
+
+    /// Handles `sippy://log?amount=glass|sips|quarter|half|bottle|<ml>`.
+    func handle(url: URL) {
+        guard url.scheme == "sippy", url.host == "log" else { return }
+        let amount = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first { $0.name == "amount" }?.value ?? "glass"
+        guard let ml = amounts.ml(forAmount: amount) else {
+            toast.show("Sippy doesn't know the amount “\(amount)”")
+            return
+        }
+        logFromAnywhere(ml: ml)
+    }
+
     func undoLast() {
         intakeLog.removeLast()
         entries = intakeLog.entries
@@ -84,11 +110,13 @@ final class AppModel: ObservableObject {
         change(&s)
         s = s.clamped()
         let timingChanged = s.intervalMinutes != settings.intervalMinutes || s.activeHours != settings.activeHours
+        let actionsChanged = s.spotlightActions != settings.spotlightActions || s.trackingMode != settings.trackingMode
         settings = s
         store.save(s)
         audio.apply(volume: s.volume, muted: s.muted)
         // A new interval or reminder hours apply right away rather than after the old timer runs out.
         if timingChanged && !overlay.isShowing { scheduleNext(.interval) }
+        if actionsChanged { SpotlightActions.sync(s) }
     }
 
     // MARK: - Screen lock

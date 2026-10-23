@@ -76,6 +76,16 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
   With no frames, `DrawnCharacter` draws the built-in chibi in SwiftUI shapes.
 - **`AudioPlayer`**: looping music from the user's files (fades in and out), plus one-shot
   effects (`appear`, `cheer`). Missing or broken files are silently skipped.
+- **`SpotlightActions`**: keeps tiny launcher apps in `~/Applications/Sippy Actions/`, named
+  *Log Water – …* to match the tracking mode. Each one is just an `Info.plist` and a shell script that
+  runs `open -g "sippy://log?amount=…"`. Sippy rebuilds them at launch and when the mode changes,
+  registers them with Launch Services, and runs `mdimport` so Spotlight finds them right away.
+  (Real App Shortcuts would need Xcode's App Intents metadata step, which the Command Line Tools
+  don't have.)
+- **`sippy://` links**: the `sippy` URL scheme is declared in `Info.plist`. `AppModel.handle(url:)` resolves
+  `amount` (glass / sips / quarter / half / bottle / millilitres) via `Amounts.ml(forAmount:)`. A log from a
+  link, Spotlight or the menu counts as the answer if the character is asking. Otherwise it logs,
+  restarts the reminder countdown, and shows a `Toast` under the menu bar.
 - **`DashboardView`**: Swift Charts bar chart with a goal rule, stat tiles, history list, and logging.
 - **`SettingsView`**: a grouped `Form`. Every control writes through `AppModel.update`, which
   clamps, saves, and reschedules if the interval changed. *Open at login* uses `SMAppService.mainApp`.

@@ -80,9 +80,14 @@ final class OverlayController {
         }
     }
 
+    /// True while the character is on screen waiting for (or about to ask for) an answer.
+    var isAwaitingAnswer: Bool {
+        isShowing && (state.stage == .asking || state.stage == .arriving)
+    }
+
     /// `ml` is how much they drank; nil means snooze.
     func answer(ml: Int?) {
-        guard isShowing, state.stage == .asking || state.stage == .arriving else { return }
+        guard isAwaitingAnswer else { return }
         cancelPending()
         model.audio.stop()
         state.stage = .answered

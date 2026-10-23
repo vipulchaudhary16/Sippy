@@ -55,6 +55,7 @@ If you're away, the character snoozes on their own after a few minutes rather th
 | 🚶 **Desktop character** | Walks in from any corner: bottom-left, bottom-right, top-left or top-right. Transparent, always-on-top, shows on every Space and over full-screen apps. Never steals keyboard focus from what you're typing in. |
 | ⏰ **Smart scheduling** | Custom interval and snooze. Optional **reminder hours** (e.g. 11:00–19:00, overnight ranges too) so it stays quiet outside your working day. Pauses while your screen is locked or asleep, and gives you a minute after you come back. Pause any time from the menu bar. |
 | 🥛 **Glasses or bottle** | Glass mode counts glasses toward a daily goal. **Bottle mode** tracks litres: answer with *a few sips*, *¼*, *½* or *whole bottle*. |
+| 🔎 **Log from Spotlight** | Drank at a random time? ⌘Space → type **log water** → Enter. Logs without opening anything, shows a small confirmation, and restarts the reminder countdown. Also a `sippy://` link for Shortcuts, Raycast or Alfred. |
 | 📊 **Dashboard** | A glass that fills through the day, streak 🔥, 7-day average, a 7-day chart against your goal, and 30-day history. |
 | 🎨 **Your own character** | Drop in PNG frames (walk, idle, sip, cheer), e.g. a chibi of you or someone you love, made with AI. Full guide below. |
 | 🔊 **Your own sounds** | `appear.mp3` when the character arrives, `cheer.mp3` when you log a drink, plus optional looping music. Volume + mute. |
@@ -118,6 +119,14 @@ targets your Mac's architecture; `UNIVERSAL=1 scripts/build.sh` builds for both 
 - **Pause Reminders** (⌘P)
 - **Dashboard…** (⌘D) and **Settings…** (⌘,)
 
+**Spotlight:** press ⌘Space and type **log water**. You'll see *Log Water – Glass* (glass mode) or
+*A Few Sips / ¼ / ½ / Whole Bottle* (bottle mode). Press Enter and it's logged. (Turn off in
+Settings → General.)
+
+**Links for automation:** `sippy://log?amount=glass`, `sips`, `quarter`, `half`, `bottle`, or a number of
+millilitres like `sippy://log?amount=330`. Use them from the Shortcuts app, Raycast, Alfred,
+Stream Deck, or Terminal (`open "sippy://log?amount=half"`).
+
 **Settings**
 
 | Section | What you can change |
@@ -127,7 +136,7 @@ targets your Mac's architecture; `UNIVERSAL=1 scripts/build.sh` builds for both 
 | Reminders | Interval, snooze length, auto-snooze after no answer, "show the reminder now" |
 | Music | Add songs that loop while the character is on screen, volume, mute |
 | Character | Which corner the character comes from (left/right, bottom/top), and the Character folder for your own frames and sounds |
-| General | Open Sippy when you log in |
+| General | Open Sippy when you log in, "Log Water" actions in Spotlight |
 
 ## Make the character yours
 

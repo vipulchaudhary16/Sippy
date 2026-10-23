@@ -91,6 +91,33 @@ public struct Amounts {
             : DrinkOption(label: "Log ¼ Bottle", ml: settings.bottleML / 4)
     }
 
+    /// Amount names used by `sippy://log?amount=…` and the Spotlight actions:
+    /// glass, sips, quarter, half, bottle, or a plain number of millilitres.
+    public func ml(forAmount name: String) -> Int? {
+        let b = settings.bottleML
+        switch name.lowercased() {
+        case "glass": return settings.glassML
+        case "sips", "sip": return max(50, b / 10)
+        case "quarter": return b / 4
+        case "half": return b / 2
+        case "bottle", "whole": return b
+        default:
+            guard let ml = Int(name), ml > 0 else { return nil }
+            return min(ml, 5000)
+        }
+    }
+
+    /// The Spotlight actions to offer for the current mode: (amount name, title).
+    public var spotlightActions: [(amount: String, title: String)] {
+        switch settings.trackingMode {
+        case .glasses:
+            return [("glass", "Log Water – Glass")]
+        case .bottle:
+            return [("sips", "Log Water – A Few Sips"), ("quarter", "Log Water – ¼ Bottle"),
+                    ("half", "Log Water – ½ Bottle"), ("bottle", "Log Water – Whole Bottle")]
+        }
+    }
+
     /// A display-unit value as text: litres keep two decimals so 0.25 + 2.25 still reads as 2.5,
     /// glasses keep one. Trailing zeros are dropped (2.50 -> "2.5", 3.0 -> "3").
     public func format(_ x: Double) -> String {

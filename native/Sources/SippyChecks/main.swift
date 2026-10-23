@@ -176,6 +176,27 @@ test("scheduler fires once when due, holds while held") {
     check(scheduler.nextFire == nil)
 }
 
+test("log amounts resolve by name or millilitres") {
+    var s = AppSettings()
+    s.glassML = 300
+    s.bottleML = 1000
+    let a = Amounts(s)
+    check(a.ml(forAmount: "glass") == 300)
+    check(a.ml(forAmount: "sips") == 100)
+    check(a.ml(forAmount: "Quarter") == 250)
+    check(a.ml(forAmount: "half") == 500)
+    check(a.ml(forAmount: "bottle") == 1000)
+    check(a.ml(forAmount: "330") == 330)
+    check(a.ml(forAmount: "99999") == 5000, "capped")
+    check(a.ml(forAmount: "0") == nil)
+    check(a.ml(forAmount: "coffee") == nil)
+    check(a.spotlightActions.map(\.amount) == ["glass"])
+    s.trackingMode = .bottle
+    check(Amounts(s).spotlightActions.map(\.amount) == ["sips", "quarter", "half", "bottle"])
+    // Every offered action must resolve.
+    check(Amounts(s).spotlightActions.allSatisfy { Amounts(s).ml(forAmount: $0.amount) != nil })
+}
+
 func at(_ d: Int, _ h: Int, _ m: Int = 0) -> Date {
     cal.date(from: DateComponents(year: 2026, month: 10, day: d, hour: h, minute: m))!
 }

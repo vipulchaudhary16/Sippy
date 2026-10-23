@@ -37,6 +37,8 @@ public struct AppSettings: Codable, Equatable {
     public var activeHoursEnabled = false
     public var activeFromMinutes = 9 * 60
     public var activeToMinutes = 18 * 60
+    /// Keep "Log Water" launchers in ~/Applications/Sippy Actions so Spotlight can find them.
+    public var spotlightActions = true
 
     public init() {}
 
@@ -84,6 +86,7 @@ public struct AppSettings: Codable, Equatable {
         activeHoursEnabled = try c.decodeIfPresent(Bool.self, forKey: .activeHoursEnabled) ?? d.activeHoursEnabled
         activeFromMinutes = try c.decodeIfPresent(Int.self, forKey: .activeFromMinutes) ?? d.activeFromMinutes
         activeToMinutes = try c.decodeIfPresent(Int.self, forKey: .activeToMinutes) ?? d.activeToMinutes
+        spotlightActions = try c.decodeIfPresent(Bool.self, forKey: .spotlightActions) ?? d.spotlightActions
     }
 }
 

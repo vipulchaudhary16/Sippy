@@ -48,6 +48,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.healthcare-fitness</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key><string>com.vipulchaudhary.sippy</string>
+            <key>CFBundleURLSchemes</key><array><string>sippy</string></array>
+        </dict>
+    </array>
 </dict>
 </plist>
 PLIST
