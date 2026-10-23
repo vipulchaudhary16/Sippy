@@ -55,7 +55,7 @@ for f in frames {
     if f.partial > 0.1 { notes.append("lots of semi-transparent pixels (\(Int(f.partial * 100))%), may show a halo") }
     let drift = f.feet - reference.feet
     // Cheer frames may hop; everything else should stand on the same line.
-    if abs(drift) > 12 && !f.name.hasPrefix("cheer") && !f.name.hasPrefix("knock") { notes.append("feet \(abs(drift))px \(drift < 0 ? "higher" : "lower") than reference, will jump") }
+    if abs(drift) > 12 && !f.name.hasPrefix("cheer") { notes.append("feet \(abs(drift))px \(drift < 0 ? "higher" : "lower") than reference, will jump") }
     let mark = notes.isEmpty ? "✓" : "⚠︎"
     if !notes.isEmpty { problems += 1 }
     print("\(mark) \(f.name)  feet y=\(f.feet)  body x \(f.left)-\(f.right)  \(Int(f.clear * 100))% clear")
