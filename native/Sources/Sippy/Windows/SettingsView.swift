@@ -89,6 +89,15 @@ struct SettingsView: View {
             case .meetings:
                 Section("Meeting knocks") {
                     Toggle("Knock before my calendar events", isOn: eventToggle)
+                    if calendar.needsAccess {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                            Text("Sippy needs permission to read your calendar.")
+                            Spacer()
+                            Button("Allow Calendar Access") { askForCalendar() }
+                                .buttonStyle(.borderedProminent)
+                        }
+                    }
                     if s.eventRemindersEnabled && calendar.isAuthorized {
                         Stepper("Knock **\(s.eventLeadMinutes) min** before", value: binding(\.eventLeadMinutes), in: 1...120)
                         let _ = calendar.accessChanged
@@ -101,11 +110,13 @@ struct SettingsView: View {
                                 }
                             }
                         }
+                    }
+                    if s.eventRemindersEnabled {
                         Button { calendar.testKnock() } label: {
                             if let next = calendar.nextEventSummary {
-                                Text("Test knock with my next event: \(next)")
+                                Label("Test knock with my next event: \(next)", systemImage: "play.circle.fill")
                             } else {
-                                Text("Test knock (no events in the next 24 h, uses a pretend meeting)")
+                                Label("Test knock (no upcoming events, uses a pretend meeting)", systemImage: "play.circle.fill")
                             }
                         }
                     }
@@ -187,6 +198,16 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 520, maxHeight: .infinity)
+        .onAppear {
+            // After an update macOS may have forgotten the permission; ask again right away.
+            if tab == .meetings && calendar.needsAccess { askForCalendar() }
+        }
+    }
+
+    private func askForCalendar() {
+        calendar.requestAccess { granted in
+            calendarMessage = granted ? nil : "Calendar access wasn't allowed. Turn it on in System Settings → Privacy & Security → Calendars."
+        }
     }
 
     /// Turning knocks on asks for Calendar access first.

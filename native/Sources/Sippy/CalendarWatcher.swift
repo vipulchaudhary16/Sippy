@@ -34,7 +34,14 @@ final class CalendarWatcher: ObservableObject {
         return status == .denied || status == .restricted
     }
 
+    /// Knocks are on, but macOS hasn't been asked yet (or forgot after an update).
+    var needsAccess: Bool {
+        model.settings.eventRemindersEnabled && !isAuthorized && !isDenied
+    }
+
     func requestAccess(_ done: @escaping (Bool) -> Void) {
+        // The permission prompt only shows in front if Sippy is the active app.
+        NSApp.activate(ignoringOtherApps: true)
         let finish: (Bool, Error?) -> Void = { granted, _ in
             DispatchQueue.main.async {
                 // A fresh store sees calendars that became readable after the grant.
