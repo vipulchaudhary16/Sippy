@@ -85,7 +85,9 @@ Requires macOS 13 (Swift Charts, `SMAppService`, `ImageRenderer`). Language mode
 - **`sippy://` links**: the `sippy` URL scheme is declared in `Info.plist`. `AppModel.handle(url:)` resolves
   `amount` (glass / sips / quarter / half / bottle / millilitres) via `Amounts.ml(forAmount:)`. A log from a
   link, Spotlight or the menu counts as the answer if the character is asking. Otherwise it logs,
-  restarts the reminder countdown, and shows a `Toast` under the menu bar.
+  restarts the reminder countdown, and `OverlayController.celebrate()` fades the character in at the
+  centre of the screen, cheering with `cheer.mp3`, for ~2.5 s. If the character is mid-animation it
+  falls back to a small `Toast` under the menu bar.
 - **`DashboardView`**: Swift Charts bar chart with a goal rule, stat tiles, history list, and logging.
 - **`SettingsView`**: a grouped `Form`. Every control writes through `AppModel.update`, which
   clamps, saves, and reschedules if the interval changed. *Open at login* uses `SMAppService.mainApp`.

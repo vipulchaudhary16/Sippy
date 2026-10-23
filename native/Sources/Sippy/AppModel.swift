@@ -78,14 +78,17 @@ final class AppModel: ObservableObject {
 
     /// A drink logged outside the reminder (Spotlight action, sippy:// link, menu). If the
     /// character is asking right now it counts as the answer; otherwise log, restart the
-    /// reminder countdown, and confirm with a toast.
+    /// reminder countdown, and have the character cheer in the middle of the screen.
     func logFromAnywhere(ml: Int) {
         if overlay.isAwaitingAnswer {
             overlay.answer(ml: ml)
             return
         }
         drank(ml: ml)
-        toast.show("Logged \(ml) ml · \(amounts.progress(todayML)) today")
+        // Cheer in the middle of the screen; if the character is busy, a quiet toast instead.
+        if !overlay.celebrate() {
+            toast.show("Logged \(ml) ml · \(amounts.progress(todayML)) today")
+        }
     }
 
     /// Handles `sippy://log?amount=glass|sips|quarter|half|bottle|<ml>`.

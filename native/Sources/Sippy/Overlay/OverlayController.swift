@@ -60,6 +60,7 @@ final class OverlayController {
 
         let panel = makePanelIfNeeded()
         panel.setFrame(start, display: false)
+        panel.alphaValue = 1
         panel.orderFrontRegardless()
 
         let s = model.settings
@@ -95,17 +96,64 @@ final class OverlayController {
             model.drank(ml: ml)
             let s = model.settings
             model.audio.playEffect(AppPaths.cheerSound, volume: s.volume, muted: s.muted)
-            let progress = model.amounts.progress(model.todayML)
             state.pose = .cheering
-            state.message = model.todayML >= s.goalML
-                ? "Yay! \(progress) — goal smashed! 🎉"
-                : "Yay! That's \(progress) today 💧"
+            state.message = cheerMessage()
         } else {
             model.snooze()
             state.pose = .idle
             state.message = "Okay! I'll be back in \(model.settings.snoozeMinutes) min ⏰"
         }
         after(1.8) { [weak self] in self?.leave() }
+    }
+
+    /// A drink logged from Spotlight, a link or the menu: pop up in the middle of the screen,
+    /// cheer with the "yay" sound, then fade away. Returns false if the character is busy.
+    @discardableResult
+    func celebrate() -> Bool {
+        guard !isShowing else { return false }
+        isShowing = true
+        cancelPending()
+
+        let screen = currentScreen().visibleFrame
+        let frame = NSRect(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2,
+                           width: size.width, height: size.height)
+        state.sprites = SpriteSet.load()
+        state.fromRight = false
+        state.facingLeft = false
+        state.pose = .cheering
+        state.message = cheerMessage()
+        state.stage = .answered
+
+        let panel = makePanelIfNeeded()
+        panel.setFrame(frame, display: false)
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.25
+            panel.animator().alphaValue = 1
+        }
+
+        let s = model.settings
+        model.audio.playEffect(AppPaths.cheerSound, volume: s.volume, muted: s.muted)
+
+        after(2.6) { [weak self] in
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.4
+                panel.animator().alphaValue = 0
+            }, completionHandler: {
+                panel.orderOut(nil)
+                panel.alphaValue = 1
+                self?.isShowing = false
+            })
+        }
+        return true
+    }
+
+    private func cheerMessage() -> String {
+        let progress = model.amounts.progress(model.todayML)
+        return model.todayML >= model.settings.goalML
+            ? "Yay! \(progress) — goal smashed! 🎉"
+            : "Yay! That's \(progress) today 💧"
     }
 
     private func leave() {
