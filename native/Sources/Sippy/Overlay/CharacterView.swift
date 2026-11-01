@@ -1,9 +1,10 @@
 import AppKit
+import AVFoundation
 import SwiftUI
 import SippyCore
 
-enum CharacterPose: Equatable {
-    case walking, idle, sipping, cheering, knocking
+enum CharacterPose: Hashable {
+    case walking, idle, sipping, cheering, knocking, sad
 }
 
 /// Shows the user's sprite frames when they've supplied them, otherwise the built-in drawn character.
@@ -18,12 +19,14 @@ struct CharacterView: View {
         case .sipping: return 2
         case .cheering: return 3
         case .knocking: return 6
-        case .idle: return 4
+        case .idle, .sad: return 4
         }
     }
 
     var body: some View {
-        if let frames = sprites.frames(for: pose) {
+        if let clip = sprites.clip(for: pose) {
+            VideoClipView(url: clip)
+        } else if let frames = sprites.frames(for: pose) {
             SpriteView(frames: frames, fps: fps, blinks: pose == .idle)
         } else {
             DrawnCharacter(pose: pose)
@@ -31,18 +34,118 @@ struct CharacterView: View {
     }
 }
 
+// MARK: - Making it feel alive
+
+/// Life on top of any character, even a single still image: it breathes, stretches as it
+/// falls, squashes and wobbles when it lands, hops on a cheer or a touch of the cursor, and
+/// leans toward wherever the cursor is.
+struct AliveCharacter: View {
+    @ObservedObject var state: OverlayState
+
+    var body: some View {
+        TimelineView(.animation) { context in
+            let m = Motion(state: state, now: context.date)
+            CharacterView(pose: state.pose, sprites: state.sprites)
+                .scaleEffect(x: m.scaleX * (state.facingLeft ? -1 : 1), y: m.scaleY, anchor: .bottom)
+                .rotationEffect(.degrees(m.lean), anchor: .bottom)
+                .offset(y: m.lift)
+        }
+    }
+}
+
+/// One frame of procedural motion. Scales are around the feet, so the character stays grounded.
+struct Motion {
+    var scaleX: CGFloat = 1
+    var scaleY: CGFloat = 1
+    var lean: Double = 0
+    var lift: CGFloat = 0
+
+    init(state: OverlayState, now: Date) {
+        let t = now.timeIntervalSinceReferenceDate
+        let walking = state.pose == .walking
+        // The drawn character animates its own walk; image frames get a step bounce and sway.
+        let imageWalk = walking && !state.sprites.isEmpty
+
+        if state.airborne {
+            scaleY += 0.1
+            scaleX -= 0.06
+        } else if !walking {
+            // Breathing: a slow rise and fall, a little wider as it exhales.
+            let breath = CGFloat(sin(t * 2.4)) * 0.018
+            scaleY += breath
+            scaleX -= breath * 0.6
+        }
+
+        // Landing: squash flat, spring back past straight, settle. Volume is roughly kept.
+        if let hit = state.impactAt {
+            let dt = now.timeIntervalSince(hit)
+            if dt < 1.2 {
+                let squash = 0.32 * state.impactStrength * CGFloat(exp(-dt * 6) * cos(dt * 20))
+                scaleY -= squash
+                scaleX += squash * 0.8
+            }
+        }
+
+        // Hop: crouch, jump, land with a small squash.
+        if let hop = state.hopAt {
+            let dt = now.timeIntervalSince(hop)
+            if dt < 0.12 {
+                let crouch = CGFloat(sin(dt / 0.12 * .pi)) * 0.08
+                scaleY -= crouch
+                scaleX += crouch * 0.7
+            } else if dt < 0.6 {
+                let p = (dt - 0.12) / 0.48
+                lift = -CGFloat(sin(p * .pi)) * 34
+                scaleY += 0.06 * CGFloat(sin(p * .pi))
+            } else if dt < 0.85 {
+                let land = CGFloat(sin((dt - 0.6) / 0.25 * .pi)) * 0.07
+                scaleY -= land
+                scaleX += land * 0.7
+            }
+        }
+
+        if imageWalk {
+            lift += -CGFloat(abs(sin(t * 9))) * 6
+            lean += sin(t * 9) * 2.5
+        }
+
+        // Lean toward the cursor, as if curious about what you're doing.
+        if !walking { lean += Double(state.lookX) * 5 }
+    }
+}
+
 // MARK: - User sprites
 
 /// Frames loaded from ~/Library/Application Support/Sippy/Character:
-/// walk_0.png, walk_1.png… idle_0.png… sip_0.png… cheer_0.png… (any missing set falls back sensibly).
+/// walk_0.png, walk_1.png… idle_0.png… sip_0.png… cheer_0.png… sad_0.png… (any missing set falls back sensibly).
+/// Transparent video clips (walk.mov, idle.mov, sip.mov, cheer.mov, knock.mov, sad.mov) take priority over
+/// frames for the same pose; make them with scripts/make_video_character.swift.
 struct SpriteSet {
     var walk: [NSImage] = []
     var idle: [NSImage] = []
     var sip: [NSImage] = []
     var cheer: [NSImage] = []
+    var sad: [NSImage] = []
     var knock: [NSImage] = []
+    var clips: [CharacterPose: URL] = [:]
 
-    var isEmpty: Bool { walk.isEmpty && idle.isEmpty && sip.isEmpty && cheer.isEmpty && knock.isEmpty }
+    var isEmpty: Bool { walk.isEmpty && idle.isEmpty && sip.isEmpty && cheer.isEmpty && knock.isEmpty && sad.isEmpty && clips.isEmpty }
+
+    /// A pose's own clip, or the standing clip when only that one exists and the pose has no frames.
+    func clip(for pose: CharacterPose) -> URL? {
+        if let own = clips[pose] { return own }
+        guard let standing = clips[.idle] else { return nil }
+        let hasFrames: Bool
+        switch pose {
+        case .walking: hasFrames = !walk.isEmpty
+        case .idle: hasFrames = false
+        case .sipping: hasFrames = !sip.isEmpty
+        case .cheering: hasFrames = !cheer.isEmpty
+        case .knocking: hasFrames = !knock.isEmpty
+        case .sad: hasFrames = !sad.isEmpty
+        }
+        return hasFrames ? nil : standing
+    }
 
     func frames(for pose: CharacterPose) -> [NSImage]? {
         // When a pose borrows the idle set, use only the eyes-open frame so it doesn't flicker.
@@ -54,6 +157,7 @@ struct SpriteSet {
         case .sipping: set = sip.isEmpty ? still : sip
         case .cheering: set = cheer.isEmpty ? (idle.isEmpty ? sip : still) : cheer
         case .knocking: set = knock.isEmpty ? still : knock
+        case .sad: set = sad.isEmpty ? still : sad
         }
         if set.isEmpty { return isEmpty ? nil : frames(for: .idle) }
         return set
@@ -67,8 +171,13 @@ struct SpriteSet {
                 .sorted { frameNumber($0) < frameNumber($1) }
                 .compactMap { NSImage(contentsOf: $0) }
         }
+        var clips: [CharacterPose: URL] = [:]
+        let names: [String: CharacterPose] = ["walk": .walking, "idle": .idle, "sip": .sipping, "cheer": .cheering, "knock": .knocking, "sad": .sad]
+        for file in files where ["mov", "mp4", "m4v"].contains(file.pathExtension.lowercased()) {
+            if let pose = names[file.deletingPathExtension().lastPathComponent.lowercased()] { clips[pose] = file }
+        }
         return SpriteSet(walk: frames("walk"), idle: frames("idle"), sip: frames("sip"), cheer: frames("cheer"),
-                         knock: frames("knock"))
+                         sad: frames("sad"), knock: frames("knock"), clips: clips)
     }
 
     private static func frameNumber(_ url: URL) -> Int {
@@ -98,6 +207,73 @@ struct SpriteView: View {
                 .interpolation(isPixelArt ? .none : .high)
                 .scaledToFit()
         }
+    }
+}
+
+// MARK: - Video clips
+
+/// Loops a transparent video clip, silently. HEVC-with-alpha clips show through to the desktop.
+struct VideoClipView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> ClipPlayerView {
+        let view = ClipPlayerView()
+        view.play(url)
+        return view
+    }
+
+    func updateNSView(_ view: ClipPlayerView, context: Context) {
+        view.play(url)
+    }
+
+    static func dismantleNSView(_ view: ClipPlayerView, coordinator: ()) {
+        view.stop()
+    }
+}
+
+final class ClipPlayerView: NSView {
+    private let playerLayer = AVPlayerLayer()
+    private let player = AVQueuePlayer()
+    private var looper: AVPlayerLooper?
+    private var current: URL?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.backgroundColor = .clear
+        layer?.masksToBounds = false
+        player.isMuted = true
+        playerLayer.player = player
+        playerLayer.videoGravity = .resizeAspect
+        playerLayer.backgroundColor = .clear
+        // Ask for BGRA so the clip's alpha channel survives to the screen.
+        playerLayer.pixelBufferAttributes = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+        layer?.addSublayer(playerLayer)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func layout() {
+        super.layout()
+        // Square and as tall as the view: every clip is scaled by height, so the character is the
+        // same size in every pose, feet on the floor, and raised arms can reach past the sides.
+        playerLayer.frame = CGRect(x: bounds.midX - bounds.height / 2, y: 0, width: bounds.height, height: bounds.height)
+    }
+
+    func play(_ url: URL) {
+        guard url != current else { return }
+        current = url
+        looper?.disableLooping()
+        player.removeAllItems()
+        looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+        player.play()
+    }
+
+    func stop() {
+        looper?.disableLooping()
+        player.pause()
+        player.removeAllItems()
+        current = nil
     }
 }
 
@@ -202,6 +378,9 @@ struct DrawnCharacter: View {
 
             if pose == .cheering {
                 Ellipse().fill(Color(red: 0.75, green: 0.25, blue: 0.3)).frame(width: 16, height: 12).position(x: 81, y: 101)
+            } else if pose == .sad {
+                Smile().stroke(Color(white: 0.2), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .frame(width: 12, height: 5).rotationEffect(.degrees(180)).position(x: 81, y: 102)
             } else if pose != .sipping {
                 Smile().stroke(Color(white: 0.2), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                     .frame(width: 14, height: 6).position(x: 81, y: 99)

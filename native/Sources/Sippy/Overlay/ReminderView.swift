@@ -25,9 +25,8 @@ struct ReminderView: View {
                         .combined(with: .opacity))
             }
 
-            CharacterView(pose: state.pose, sprites: state.sprites)
+            AliveCharacter(state: state)
                 .frame(width: 210, height: 310)
-                .scaleEffect(x: state.facingLeft ? -1 : 1, y: 1)
         }
         .frame(width: 380, height: 540)
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: state.stage)

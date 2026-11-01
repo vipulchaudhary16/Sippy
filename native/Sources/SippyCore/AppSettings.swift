@@ -12,6 +12,13 @@ public enum VerticalPosition: String, Codable, CaseIterable {
     case top
 }
 
+/// How the character arrives: walking in from the side, dropping in from above, or either at random.
+public enum EntranceStyle: String, Codable, CaseIterable {
+    case walk
+    case drop
+    case surprise
+}
+
 public enum TrackingMode: String, Codable, CaseIterable {
     case glasses
     case bottle
@@ -33,6 +40,13 @@ public struct AppSettings: Codable, Equatable {
     public var dailyGoalML: Int = 2500
     public var entrySide: EntrySide = .left
     public var verticalPosition: VerticalPosition = .bottom
+    public var entranceStyle: EntranceStyle = .surprise
+    /// Hold the reminder countdown while nobody has touched the mouse or keyboard for `idleMinutes`.
+    public var pauseWhenIdle = true
+    public var idleMinutes = 5
+    /// Per sound effect (`SoundEffect.rawValue`): "none", "system:<name>", or absent for the
+    /// user's file / built-in sound.
+    public var soundChoices: [String: String] = [:]
     /// Only remind between these times (minutes after midnight) when enabled.
     public var activeHoursEnabled = false
     public var activeFromMinutes = 9 * 60
@@ -69,6 +83,7 @@ public struct AppSettings: Codable, Equatable {
         s.activeFromMinutes = min(max(s.activeFromMinutes, 0), 24 * 60 - 1)
         s.activeToMinutes = min(max(s.activeToMinutes, 0), 24 * 60 - 1)
         s.eventLeadMinutes = min(max(s.eventLeadMinutes, 1), 120)
+        s.idleMinutes = min(max(s.idleMinutes, 1), 60)
         return s
     }
 
@@ -89,6 +104,10 @@ public struct AppSettings: Codable, Equatable {
         dailyGoalML = try c.decodeIfPresent(Int.self, forKey: .dailyGoalML) ?? d.dailyGoalML
         entrySide = try c.decodeIfPresent(EntrySide.self, forKey: .entrySide) ?? d.entrySide
         verticalPosition = try c.decodeIfPresent(VerticalPosition.self, forKey: .verticalPosition) ?? d.verticalPosition
+        entranceStyle = try c.decodeIfPresent(EntranceStyle.self, forKey: .entranceStyle) ?? d.entranceStyle
+        pauseWhenIdle = try c.decodeIfPresent(Bool.self, forKey: .pauseWhenIdle) ?? d.pauseWhenIdle
+        idleMinutes = try c.decodeIfPresent(Int.self, forKey: .idleMinutes) ?? d.idleMinutes
+        soundChoices = try c.decodeIfPresent([String: String].self, forKey: .soundChoices) ?? d.soundChoices
         activeHoursEnabled = try c.decodeIfPresent(Bool.self, forKey: .activeHoursEnabled) ?? d.activeHoursEnabled
         activeFromMinutes = try c.decodeIfPresent(Int.self, forKey: .activeFromMinutes) ?? d.activeFromMinutes
         activeToMinutes = try c.decodeIfPresent(Int.self, forKey: .activeToMinutes) ?? d.activeToMinutes

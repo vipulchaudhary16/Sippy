@@ -23,23 +23,32 @@ final class AudioPlayer {
 
     private var effect: AVAudioPlayer?
 
-    /// One-shot sound (e.g. the cheer). Missing file or mute means silence.
-    func playEffect(_ url: URL?, volume: Double, muted: Bool) {
-        guard !muted, let url, let p = try? AVAudioPlayer(contentsOf: url) else { return }
-        p.volume = Float(volume)
+    /// Plays a sound effect as chosen in Settings. With no file of their own, the knock falls back
+    /// to a generated "knock-knock, knock-knock" on wood; the others stay silent.
+    /// `test` plays even when muted (the Settings preview button).
+    func play(_ sound: SoundEffect, settings: AppSettings, test: Bool = false) {
+        guard test || !settings.muted else { return }
+        let p: AVAudioPlayer?
+        if let url = sound.url(in: settings) {
+            p = try? AVAudioPlayer(contentsOf: url)
+        } else if sound == .knock, sound.choice(in: settings) == .standard {
+            p = try? AVAudioPlayer(data: Self.knockWAV)
+        } else {
+            p = nil
+        }
+        guard let p else { return }
+        stopEffect()
+        p.volume = Float(settings.volume)
         p.play()
         effect = p
     }
 
-    /// The user's knock.mp3, or a generated "knock-knock, knock-knock" on wood.
-    func playKnock(volume: Double, muted: Bool) {
-        guard !muted else { return }
-        let p = AppPaths.knockSound.flatMap { try? AVAudioPlayer(contentsOf: $0) }
-            ?? (try? AVAudioPlayer(data: Self.knockWAV))
-        guard let p else { return }
-        p.volume = Float(volume)
-        p.play()
-        effect = p
+    /// Ends the current sound effect with a short fade: each sound lasts only as long as its action.
+    func stopEffect() {
+        guard let p = effect else { return }
+        effect = nil
+        p.setVolume(0, fadeDuration: 0.25)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { p.stop() }
     }
 
     /// Four short, damped low thuds with a click of noise, as 16-bit mono WAV.

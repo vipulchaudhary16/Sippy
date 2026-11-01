@@ -10,6 +10,9 @@ final class AppModel: ObservableObject {
     private var sessionLocked = false
     private var displayAsleep = false
     private var screenLocked: Bool { sessionLocked || displayAsleep }
+    /// Set while nobody has touched the mouse or keyboard for `idleMinutes`; when they went idle.
+    private var idleSince: Date?
+    private var idleTimer: Timer?
     /// Screen locked or asleep: nothing should pop up.
     var isAway: Bool { screenLocked }
 
@@ -20,7 +23,7 @@ final class AppModel: ObservableObject {
         let s = ReminderScheduler { [weak self] in self?.onReminderDue() }
         s.shouldHold = { [weak self] in
             guard let self else { return true }
-            return self.paused || self.screenLocked || self.overlay.isShowing
+            return self.paused || self.screenLocked || self.idleSince != nil || self.overlay.isShowing
         }
         return s
     }()
@@ -32,6 +35,7 @@ final class AppModel: ObservableObject {
         settings = store.load()
         entries = intakeLog.entries
         observeScreenLock()
+        watchIdle()
     }
 
     var stats: WaterStats { WaterStats(entries: entries) }
@@ -127,6 +131,30 @@ final class AppModel: ObservableObject {
         if actionsChanged { SpotlightActions.sync(s) }
         if s.eventRemindersEnabled != old.eventRemindersEnabled || s.eventCalendarIDs != old.eventCalendarIDs {
             calendar.refresh()
+        }
+    }
+
+    // MARK: - Away from the Mac
+
+    /// Polls the time since the last mouse or keyboard input. No permission is needed for this.
+    private func watchIdle() {
+        let t = Timer(timeInterval: 5, repeats: true) { [weak self] _ in self?.checkIdle() }
+        RunLoop.main.add(t, forMode: .common)
+        idleTimer = t
+    }
+
+    private func checkIdle() {
+        let anyInput = CGEventType(rawValue: ~0)!
+        let idle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyInput)
+        let away = settings.pauseWhenIdle && idle >= TimeInterval(settings.idleMinutes * 60)
+        if away, idleSince == nil {
+            idleSince = Date().addingTimeInterval(-idle)
+        } else if !away, let since = idleSince {
+            idleSince = nil
+            // Carry on from where the countdown stood when they walked away.
+            if let due = scheduler.nextFire {
+                scheduler.schedule(after: IdlePause.resumeDelay(nextFire: due, idleSince: since))
+            }
         }
     }
 

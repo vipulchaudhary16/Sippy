@@ -74,19 +74,5 @@ public enum AppPaths {
         supportDirectory.appendingPathComponent("Character", isDirectory: true)
     }
 
-    /// appear.mp3 plays once as the character walks in.
-    public static var appearSound: URL? { sound(named: "appear") }
-
-    /// cheer.mp3 plays when the user says they drank.
-    public static var cheerSound: URL? { sound(named: "cheer") }
-
-    /// knock.mp3 plays when the character knocks before a calendar event.
-    public static var knockSound: URL? { sound(named: "knock") }
-
-    /// `<name>.mp3` / .m4a / .wav / .aiff / .caf in the Character folder.
-    private static func sound(named name: String) -> URL? {
-        ["mp3", "m4a", "wav", "aiff", "aif", "caf"]
-            .map { characterDirectory.appendingPathComponent("\(name).\($0)") }
-            .first { FileManager.default.fileExists(atPath: $0.path) }
-    }
+    // Sound effects (appear, cheer, sad, knock) live here too; see `SoundEffect`.
 }

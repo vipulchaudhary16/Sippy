@@ -73,6 +73,11 @@ struct SettingsView: View {
                     Stepper("Snooze for **\(s.snoozeMinutes) min**", value: binding(\.snoozeMinutes), in: 1...120)
                     Stepper("If I don't answer, snooze after **\(s.autoSnoozeMinutes) min**",
                             value: binding(\.autoSnoozeMinutes), in: 1...30)
+                    Toggle("Pause while I'm away from the Mac", isOn: binding(\.pauseWhenIdle))
+                    if s.pauseWhenIdle {
+                        Stepper("Away after **\(s.idleMinutes) min** without mouse or keyboard",
+                                value: binding(\.idleMinutes), in: 1...60)
+                    }
                     Button("Show the reminder now") { model.remindNow() }
                 }
 
@@ -148,7 +153,14 @@ struct SettingsView: View {
                         Text("Top").tag(VerticalPosition.top)
                     }
                     .pickerStyle(.segmented)
-                    Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, **cheer_0.png…** and **knock_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, **cheer.mp3** for when you log a drink, and **knock.mp3** for meeting knocks. Leave the folder empty to use the built-in one.")
+                    Picker("Arrives by", selection: binding(\.entranceStyle)) {
+                        Text("Walking in").tag(EntranceStyle.walk)
+                        Text("Dropping in").tag(EntranceStyle.drop)
+                        Text("Surprise me").tag(EntranceStyle.surprise)
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(s.verticalPosition == .top)
+                    Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, **cheer_0.png…**, **sad_0.png…** and **knock_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, **cheer.mp3** for when you log a drink, and **knock.mp3** for meeting knocks. Leave the folder empty to use the built-in one.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -181,6 +193,12 @@ struct SettingsView: View {
                         Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
                     }
                     Toggle("Mute", isOn: binding(\.muted))
+                }
+
+                Section("Sound effects") {
+                    ForEach(SoundEffect.allCases, id: \.self) { sound in
+                        SoundEffectRow(sound: sound, model: model)
+                    }
                 }
 
             case .general:
@@ -305,11 +323,10 @@ struct SettingsView: View {
 struct ActiveCharacterCard: View {
     let model: AppModel
     @State private var sprites = SpriteSet()
-    @State private var sounds: [String: Bool] = [:]
     @State private var poseIndex = 0
 
     private let poses: [(CharacterPose, String)] = [
-        (.idle, "Standing"), (.walking, "Walking"), (.sipping, "Sipping"), (.cheering, "Cheering"), (.knocking, "Knocking"),
+        (.idle, "Standing"), (.walking, "Walking"), (.sipping, "Sipping"), (.cheering, "Cheering"), (.sad, "Sad"), (.knocking, "Knocking"),
     ]
 
     var body: some View {
@@ -331,20 +348,21 @@ struct ActiveCharacterCard: View {
                 Text(sprites.isEmpty ? "Built-in character" : "Your custom character")
                     .font(.headline)
                 if sprites.isEmpty {
-                    Text("Drawn by Sippy. Add PNG frames to the Character folder to use your own.")
+                    Text("Drawn by Sippy. Add PNG frames or video clips to the Character folder to use your own.")
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    poseRow("Standing", sprites.idle.count, fallback: "—")
-                    poseRow("Walking", sprites.walk.count, fallback: "standing frame")
-                    poseRow("Sipping", sprites.sip.count, fallback: "standing frame")
-                    poseRow("Cheering", sprites.cheer.count, fallback: "standing frame")
-                    poseRow("Knocking", sprites.knock.count, fallback: "standing frame")
+                    poseRow("Standing", sprites.idle.count, video: sprites.clips[.idle] != nil, fallback: "—")
+                    poseRow("Walking", sprites.walk.count, video: sprites.clips[.walking] != nil, fallback: "standing frame")
+                    poseRow("Sipping", sprites.sip.count, video: sprites.clips[.sipping] != nil, fallback: "standing frame")
+                    poseRow("Cheering", sprites.cheer.count, video: sprites.clips[.cheering] != nil, fallback: "standing frame")
+                    poseRow("Sad", sprites.sad.count, video: sprites.clips[.sad] != nil, fallback: "standing frame")
+                    poseRow("Knocking", sprites.knock.count, video: sprites.clips[.knocking] != nil, fallback: "standing frame")
                 }
                 HStack(spacing: 8) {
-                    soundButton("appear", "Walk-in")
-                    soundButton("cheer", "Cheer")
-                    soundButton("knock", "Knock")
+                    soundButton(.appear)
+                    soundButton(.cheer)
+                    soundButton(.knock)
                 }
                 .padding(.top, 2)
                 Button("Reload") { reload() }.controlSize(.small).padding(.top, 2)
@@ -355,44 +373,119 @@ struct ActiveCharacterCard: View {
         .onAppear(perform: reload)
     }
 
-    private func poseRow(_ name: String, _ count: Int, fallback: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: count > 0 ? "checkmark.circle.fill" : "circle.dashed")
-                .foregroundStyle(count > 0 ? .green : .secondary)
+    private func poseRow(_ name: String, _ count: Int, video: Bool, fallback: String) -> some View {
+        let has = video || count > 0
+        return HStack(spacing: 6) {
+            Image(systemName: has ? "checkmark.circle.fill" : "circle.dashed")
+                .foregroundStyle(has ? .green : .secondary)
             Text(name)
-            Text(count > 0 ? "\(count) frame\(count == 1 ? "" : "s")" : "uses \(fallback)")
+            Text(video ? "video clip" : count > 0 ? "\(count) frame\(count == 1 ? "" : "s")" : "uses \(fallback)")
                 .foregroundStyle(.secondary)
         }
         .font(.caption)
     }
 
     /// Plays the sound at the current volume, even when muted, since this is a test.
-    private func soundButton(_ file: String, _ label: String) -> some View {
-        let has = sounds[file] ?? false
-        // Knocking has a built-in sound; the others are silent without a file.
-        let playable = has || file == "knock"
-        let title = has ? label : (file == "knock" ? "Knock (built-in)" : "No \(label.lowercased())")
+    private func soundButton(_ sound: SoundEffect) -> some View {
+        let settings = model.settings
+        let playable = sound.url(in: settings) != nil || (sound == .knock && sound.choice(in: settings) == .standard)
         return Button {
-            let volume = model.settings.volume
-            switch file {
-            case "knock": model.audio.playKnock(volume: volume, muted: false)
-            case "appear": model.audio.playEffect(AppPaths.appearSound, volume: volume, muted: false)
-            default: model.audio.playEffect(AppPaths.cheerSound, volume: volume, muted: false)
-            }
+            model.audio.play(sound, settings: model.settings, test: true)
         } label: {
-            Label(title, systemImage: playable ? "play.circle.fill" : "speaker.slash")
+            Label(sound.title, systemImage: playable ? "play.circle.fill" : "speaker.slash")
         }
         .controlSize(.small)
         .disabled(!playable)
-        .help(playable ? "Play the \(label.lowercased()) sound" : "Add \(file).mp3 to the Character folder")
+        .help(playable ? "Play the \(sound.title.lowercased()) sound" : "Pick a sound in Settings › Sound")
     }
 
     private func reload() {
         sprites = SpriteSet.load()
-        sounds = [
-            "appear": AppPaths.appearSound != nil,
-            "cheer": AppPaths.cheerSound != nil,
-            "knock": AppPaths.knockSound != nil,
-        ]
+    }
+}
+
+/// One sound effect: what plays, a menu to change it (your file, a macOS sound, or none), and a
+/// preview button.
+struct SoundEffectRow: View {
+    let sound: SoundEffect
+    @ObservedObject var model: AppModel
+    @State private var error: String?
+    /// Bumped after copying or removing a file, so the row re-reads the Character folder.
+    @State private var revision = 0
+
+    private var choice: SoundEffect.Choice { sound.choice(in: model.settings) }
+
+    private var currentName: String {
+        _ = revision
+        switch choice {
+        case .none: return "None"
+        case .system(let name): return name
+        case .standard:
+            if let file = sound.customFile { return file.lastPathComponent }
+            return sound == .knock ? "Built-in knock" : "None"
+        }
+    }
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(sound.title)
+                Text(error ?? sound.detail).font(.caption).foregroundStyle(error == nil ? Color.secondary : Color.red)
+            }
+            Spacer()
+            Menu(currentName) {
+                if let file = sound.customFile {
+                    Button("My file: \(file.lastPathComponent)") { set(.standard) }
+                } else if sound == .knock {
+                    Button("Built-in knock") { set(.standard) }
+                }
+                Button("None") { set(.none) }
+                Divider()
+                ForEach(SoundEffect.systemSounds, id: \.self) { name in
+                    Button(name) {
+                        set(.system(name))
+                        model.audio.play(sound, settings: model.settings, test: true)
+                    }
+                }
+                Divider()
+                Button("Choose a file…", action: chooseFile)
+                if sound.customFile != nil {
+                    Button("Remove my file", role: .destructive) {
+                        try? sound.removeCustomFile()
+                        if choice == .standard { set(.standard) }
+                        revision += 1
+                    }
+                }
+            }
+            .fixedSize()
+            Button {
+                model.audio.play(sound, settings: model.settings, test: true)
+            } label: {
+                Image(systemName: "play.circle.fill")
+            }
+            .buttonStyle(.borderless)
+            .help("Play")
+        }
+    }
+
+    private func set(_ choice: SoundEffect.Choice) {
+        model.update { $0.soundChoices[sound.rawValue] = choice.stored }
+    }
+
+    private func chooseFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio]
+        panel.message = "Pick a sound for “\(sound.title)” (\(sound.detail))"
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try sound.install(url)
+            error = nil
+            set(.standard)
+            revision += 1
+            model.audio.play(sound, settings: model.settings, test: true)
+        } catch {
+            self.error = "Couldn't copy that file: \(error.localizedDescription)"
+        }
     }
 }

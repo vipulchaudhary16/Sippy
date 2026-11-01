@@ -274,5 +274,38 @@ test("meeting links are found in url, location, or notes") {
     check(MeetingLink.find(in: ["Lunch at the cafe", nil]) == nil)
 }
 
+test("idle pause resumes the countdown from where it stood") {
+    let left = day(10, 12)
+    // 10 minutes were left when they walked away; after any time away, 10 minutes remain.
+    check(IdlePause.resumeDelay(nextFire: left.addingTimeInterval(600), idleSince: left) == 600)
+    // Due right as they left (or overdue): a minute to settle in first.
+    check(IdlePause.resumeDelay(nextFire: left, idleSince: left) == 60)
+    check(IdlePause.resumeDelay(nextFire: left.addingTimeInterval(-300), idleSince: left) == 60)
+}
+
+test("old settings get the new entrance and idle defaults") {
+    let old = #"{"intervalMinutes":30,"entrySide":"right"}"#.data(using: .utf8)!
+    let s = try JSONDecoder().decode(AppSettings.self, from: old)
+    check(s.entranceStyle == .surprise)
+    check(s.pauseWhenIdle)
+    check(s.idleMinutes == 5)
+    var bad = AppSettings()
+    bad.idleMinutes = 0
+    check(bad.clamped().idleMinutes == 1)
+}
+
+test("sound choices round-trip and default to the user's file") {
+    var s = AppSettings()
+    check(SoundEffect.cheer.choice(in: s) == .standard)
+    s.soundChoices["cheer"] = SoundEffect.Choice.system("Glass").stored
+    s.soundChoices["sad"] = SoundEffect.Choice.none.stored
+    let back = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(s))
+    check(SoundEffect.cheer.choice(in: back) == .system("Glass"))
+    check(SoundEffect.sad.choice(in: back) == .none)
+    check(SoundEffect.sad.url(in: back) == nil)
+    check(SoundEffect.Choice("system:Hero") == .system("Hero"))
+    check(SoundEffect.Choice("garbage") == .standard)
+}
+
 print(failures == 0 ? "All checks passed." : "\(failures) check(s) failed.")
 exit(failures == 0 ? 0 : 1)
