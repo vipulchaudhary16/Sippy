@@ -7,7 +7,25 @@ Each release's notes on GitHub are taken from its section here, so add one befor
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-01
+
 ### Added
+- **Drop-in entrance.** The character can fall from the top of the screen, stretch on the way
+  down, squash and wobble as it lands and bounce to a stop. *Arrives by: Walking in, Dropping in
+  or Surprise me* (the default picks at random).
+- **Feels alive.** Any character, even a single image, now breathes while it stands, leans
+  toward your cursor, turns to face it, and hops when you touch it or log a drink.
+- **Pause while away.** With no mouse or keyboard input for 5 minutes (adjustable), the reminder
+  countdown stops and carries on from where it was when you come back. On by default.
+- **Happy and sad goodbyes.** Log a drink and the character cheers, then carries on across the
+  screen and out the far side. Snooze and it looks sad (`sad.mov` or `sad_0.png…`), then turns
+  back the way it came.
+- **Choose every sound in Settings.** *Sound effects* lists the walk-in, cheer, walk-out, sad and knock
+  sounds; pick your own file, any macOS sound, or none, and preview each with ▶. Snoozing has
+  its own sound now.
+- **Video characters.** Drop transparent clips (`walk.mov`, `idle.mov`, `sip.mov`, `cheer.mov`,
+  `knock.mov`) into the Character folder. `scripts/make_video_character.swift` turns any video
+  into one on your Mac, cutting the background out with Apple's Vision.
 - **Calendar knocks.** A few minutes before each event, the character walks in, knocks on your
   screen with a knock sound, and tells you what's starting, with a **Join meeting** button for
   Zoom, Google Meet, Teams, Webex and FaceTime links. Reads macOS Calendar, so Google, iCloud,
@@ -20,6 +38,9 @@ Each release's notes on GitHub are taken from its section here, so add one befor
 - Dashboard **Up next** card: today's remaining meetings with **Join** buttons.
 
 ### Changed
+- The character stops a few steps in from the edge of the screen instead of in the corner.
+- Each sound lasts only as long as its action: the walk-in sound ends when the character
+  arrives, the cheer when it walks off, and so on.
 - **Settings has tabs:** Water, Meetings, Character, General.
 - **The menu has Water and Meetings sections.** Today's meetings are listed, and clicking one
   with a video link joins it.
@@ -74,6 +95,7 @@ First release of the native macOS app.
 - Reminders wait while the screen is locked or asleep, then give you a minute after you return.
 - Universal build (Apple silicon + Intel), macOS 13+.
 
+[1.3.0]: https://github.com/vipulchaudhary16/Sippy/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/vipulchaudhary16/Sippy/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/vipulchaudhary16/Sippy/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vipulchaudhary16/Sippy/releases/tag/v1.0.0

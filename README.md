@@ -160,11 +160,17 @@ frames and optional sounds in the **Character folder** (Settings → *Open Chara
 ├── walk_0.png … walk_3.png              walk cycle, facing right
 ├── sip_0.png    sip_1.png               drinking
 ├── cheer_0.png  cheer_1.png             celebrating
+├── sad_0.png    sad_1.png               disappointed, when you snooze
 ├── knock_0.png  knock_1.png             knocking before a calendar event
 ├── appear.mp3                           plays once when the character walks in
 ├── cheer.mp3                            plays when you log a drink
+├── walkOut.mp3                          plays as it walks off happy
+├── sad.mp3                              plays when you snooze
 └── knock.mp3                            plays when knocking (a knock is built in)
 ```
+
+Sounds can also be picked in **Settings → Sound → Sound effects**: your own file, any macOS
+sound (Glass, Hero, Pop…), or none, with a play button to preview each.
 
 Every file is optional: missing poses fall back to the idle frame, and an empty folder means the
 built-in character. Changes are picked up at the next reminder; no restart needed.
@@ -176,6 +182,23 @@ Check your frames before using them:
 ```sh
 swift native/scripts/check_frames.swift
 ```
+
+### Video characters
+
+For a character that moves like a cartoon, use short video clips instead of frames. Make a clip
+of each action with any image-to-video AI tool (give it your character on a plain or green
+background), then cut the background out on your Mac:
+
+```sh
+swift native/scripts/make_video_character.swift walk-in.mp4 walk.mov          # any plain background
+swift native/scripts/make_video_character.swift cheer.mp4 cheer.mov --green    # green screen
+swift native/scripts/make_video_character.swift sip.mp4 sip.mov --from 0.1 --to 3   # keep 0.1–3 s
+```
+
+The script uses Apple's Vision subject detection (or a green-screen key) and writes a transparent
+HEVC `.mov`. Drop **walk.mov**, **idle.mov**, **sip.mov**, **cheer.mov**, **sad.mov** and **knock.mov** into the
+Character folder; each clip loops while the character is in that pose and wins over PNG frames
+for the same pose. A pose without a clip or frames borrows **idle.mov**.
 
 ## Documentation
 
@@ -193,7 +216,7 @@ native/                  ← the app (Swift / SwiftUI, Swift Package)
   Sources/Sippy/         app: menu bar, overlay, dashboard, settings, audio
   Sources/SippyCore/     logic: settings, intake log, stats, scheduler, units
   Sources/SippyChecks/   logic checks (swift run SippyChecks)
-  scripts/               build.sh, make_icon.swift, check_frames.swift
+  scripts/               build.sh, make_icon.swift, check_frames.swift, make_video_character.swift
 docs/                    documentation and images
 ```
 
@@ -205,7 +228,7 @@ The prototype is in the git history (before the Swift rewrite) if you're curious
 
 ```sh
 cd native
-swift run SippyChecks                                  # logic checks (13 checks)
+swift run SippyChecks                                  # logic checks (24 checks)
 swift build && .build/debug/Sippy                      # run a debug build
 .build/debug/Sippy --render-previews /tmp/p --builtin  # render overlay stages to PNG
 scripts/build.sh                                       # release .app + .zip + .dmg
