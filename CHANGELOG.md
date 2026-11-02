@@ -7,6 +7,21 @@ Each release's notes on GitHub are taken from its section here, so add one befor
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-02
+
+### Added
+- **Import video poses in Settings.** *Settings → Character → Video poses → Import video…*: watch
+  the clip, trim it with Start and End, and Sippy cuts the background out on your Mac, removes
+  green-screen edges, crops and installs it for that pose. No Terminal needed.
+- The character guide has a **Bring it to life with video** section: a prompt for every pose,
+  free tools and tips.
+
+### Changed
+- The video converter is now part of the app; from the Terminal it's
+  `swift run make-video-character` (replacing `scripts/make_video_character.swift`).
+- The *Use your own character* help in Settings → Character is now a short list with icons,
+  pointing to Video poses and Sound effects.
+
 ## [1.3.0] - 2026-11-01
 
 ### Added

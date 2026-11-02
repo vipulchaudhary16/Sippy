@@ -2,12 +2,12 @@
 # Builds Sippy.app (and Sippy.dmg) using only the Xcode Command Line Tools.
 #   scripts/build.sh            -> dist/Sippy.app + dist/Sippy.dmg
 #   scripts/build.sh --install  -> also copies the app to /Applications and launches it
-# Env: VERSION=1.3.0 sets the app version; UNIVERSAL=1 builds for Apple silicon + Intel
+# Env: VERSION=1.4.0 sets the app version; UNIVERSAL=1 builds for Apple silicon + Intel
 #      (needs full Xcode, as on GitHub's macOS runners).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-VERSION="${VERSION:-1.3.0}"
+VERSION="${VERSION:-1.4.0}"
 DIST="dist"
 APP="$DIST/Sippy.app"
 ARCH_FLAGS=()
