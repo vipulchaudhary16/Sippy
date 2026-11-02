@@ -142,6 +142,14 @@ struct SettingsView: View {
                 Section("Active character") {
                     ActiveCharacterCard(model: model)
                 }
+                Section {
+                    VideoPosesView()
+                } header: {
+                    Text("Video poses")
+                } footer: {
+                    Text("Make a short clip of your character for each pose with any image-to-video AI tool, on a plain or green background. Sippy cuts the background out on your Mac. Poses without a clip use your PNG frames or the built-in character.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Character") {
                     Picker("Comes in from the", selection: binding(\.entrySide)) {
                         Text("Left").tag(EntrySide.left)
@@ -160,10 +168,21 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .disabled(s.verticalPosition == .top)
-                    Text("Use your own character by dropping transparent PNG frames into the Character folder: **walk_0.png, walk_1.png…**, **idle_0.png…**, **sip_0.png…**, **cheer_0.png…**, **sad_0.png…** and **knock_0.png…**. Draw them facing right; Sippy mirrors them when the character comes from the right. Add **appear.mp3** to play a sound when the character walks in, **cheer.mp3** for when you log a drink, and **knock.mp3** for meeting knocks. Leave the folder empty to use the built-in one.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Use your own character").font(.subheadline.weight(.semibold))
+                        HelpRow(icon: "photo.stack", title: "PNG frames in the Character folder",
+                                detail: "walk_0.png, walk_1.png… · idle_0.png… · sip_0.png… · cheer_0.png… · sad_0.png… · knock_0.png…",
+                                mono: true)
+                        HelpRow(icon: "arrow.left.and.right", title: "Draw them facing right",
+                                detail: "Sippy mirrors them when the character comes in from the right.")
+                        HelpRow(icon: "film", title: "Or use videos",
+                                detail: "Import a clip for any pose under Video poses above.")
+                        HelpRow(icon: "speaker.wave.2", title: "Sounds",
+                                detail: "Pick them below, under Sound effects.")
+                        HelpRow(icon: "tray", title: "Empty folder",
+                                detail: "Sippy uses its built-in character.")
+                    }
+                    .padding(.vertical, 4)
                     Button("Open Character Folder") {
                         let dir = AppPaths.characterDirectory
                         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -486,6 +505,29 @@ struct SoundEffectRow: View {
             model.audio.play(sound, settings: model.settings, test: true)
         } catch {
             self.error = "Couldn't copy that file: \(error.localizedDescription)"
+        }
+    }
+}
+
+/// One line of help: an icon, a short title and a quieter explanation.
+struct HelpRow: View {
+    let icon: String
+    let title: String
+    let detail: String
+    var mono = false
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.callout)
+                Text(detail)
+                    .font(mono ? .caption.monospaced() : .caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

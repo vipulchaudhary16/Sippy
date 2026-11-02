@@ -119,7 +119,7 @@ struct Motion {
 /// Frames loaded from ~/Library/Application Support/Sippy/Character:
 /// walk_0.png, walk_1.png… idle_0.png… sip_0.png… cheer_0.png… sad_0.png… (any missing set falls back sensibly).
 /// Transparent video clips (walk.mov, idle.mov, sip.mov, cheer.mov, knock.mov, sad.mov) take priority over
-/// frames for the same pose; make them with scripts/make_video_character.swift.
+/// frames for the same pose; import them in Settings › Character › Video poses.
 struct SpriteSet {
     var walk: [NSImage] = []
     var idle: [NSImage] = []

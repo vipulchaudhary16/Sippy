@@ -1,8 +1,9 @@
 # Character guide: make your own Sippy character with AI
 
-Sippy's character is just a set of transparent PNG frames. This guide shows you how to turn a
-photo of yourself (or someone you love) into a full set of frames with an AI image generator,
-one prompt at a time, and get them into the app.
+Sippy's character is a set of transparent PNG frames, and optionally short video clips that make
+it move like a cartoon. This guide shows you how to turn a photo of yourself (or someone you
+love) into a full set of frames with an AI image generator, one prompt at a time, then
+[bring it to life with video](#bring-it-to-life-with-video).
 
 <p align="center"><img src="images/demo.png" width="380" alt="A custom AI-generated character in Sippy"></p>
 
@@ -370,7 +371,8 @@ In the same folder:
 | `cheer.mp3` | When you log a drink | Short: the cheer lasts ~2 s. A "yay!" is perfect. |
 | `knock.mp3` | When knocking before a calendar event | A door knock, 1–2 s. Without one, Sippy plays a built-in knock. |
 
-`.m4a`, `.wav`, `.aiff` and `.caf` work too. For longer background music that loops while the
+`.m4a`, `.wav`, `.aiff` and `.caf` work too. You can also pick every sound, including the walk-out
+and sad sounds, in **Settings → Sound → Sound effects**: your own file, any macOS sound, or none. For longer background music that loops while the
 character is on screen, use **Settings → Music** instead. Free sound effects:
 [freesound.org](https://freesound.org), [pixabay.com/sound-effects](https://pixabay.com/sound-effects/).
 
@@ -386,3 +388,67 @@ character is on screen, use **Settings → Music** instead. Free sound effects:
 
 Frames over 256 px wide are smoothed when scaled down; small frames (pixel art) stay crisp.
 The character is drawn about 310 points tall.
+
+---
+
+## Bring it to life with video
+
+Frames flip; video moves. Give each pose a short clip and the character breathes, walks and
+jumps like a cartoon. You make the clips with an AI image-to-video tool, and Sippy does the rest:
+it trims the clip, cuts the background out on your Mac and installs it.
+
+### 1. Generate a clip per pose
+
+Use your `idle_0.png` (or any picture of the character) as the **start image**, and one prompt
+per pose. Every prompt starts with the same paragraph so the clips match:
+
+> Animate this exact character, keeping its design, colours and proportions identical. Full body
+> visible, centred, facing right, same size in every frame. Static camera, no zoom, no pan, no
+> shake. Solid flat bright green background (#00FF00), no shadows, no other objects. Smooth
+> cartoon animation, 24 fps, ends in the same pose it starts in.
+
+Then add the pose:
+
+| Pose | Add to the prompt | Length |
+|---|---|---|
+| Standing | The character stands still and breathes gently, blinks once, glances slightly left and back, with a small happy sway. Feet stay planted. | 3 s |
+| Walking | A cheerful walk cycle **in place**, like on a treadmill: the body does not move across the frame, arms swing, a slight bounce on each step, holding the water bottle. | 2 s |
+| Sipping | Lifts the blue bottle she is holding to her mouth, takes one satisfied sip with eyes closed, lowers it and smiles. No other bottles. | 3 s |
+| Cheering | Jumps with joy, both arms up, big open smile, lands back on the same spot and does a little happy wiggle. | 2–3 s |
+| Sad | Disappointed: the smile fades, shoulders droop, looks down with a small pout, a little sigh, then a tiny resigned shrug. Feet stay planted. | 3 s |
+| Knocking | Faces the viewer and knocks twice on the screen with one fist, knock-knock, then waits with a friendly expression. | 2 s |
+
+**Walking must be in place.** Sippy moves the character across the screen itself.
+
+**Tools.** Kling (about 66 free credits a day), Hailuo, Vidu and Google Veo (in Gemini) all do
+image-to-video and all need an account. Kling keeps the character the most consistent. A
+watermark is fine as long as it isn't on the character: it goes with the background.
+
+### 2. Import it in Settings
+
+**Settings → Character → Video poses → Import video…** next to the pose. Watch the clip, drag
+**Start** and **End** to keep just the action (one sip, one jump), and click **Use this clip**.
+
+Sippy then, on your Mac:
+
+- cuts the character out with Apple's Vision (the same as "lift subject" in Photos), so any plain
+  background works;
+- removes the green tint a green screen leaves on hair and edges;
+- crops to the area the character moves in, so a small character in a wide video still fills
+  the clip, and scales it to match the other poses;
+- saves a transparent HEVC clip as `idle.mov`, `walk.mov`, `sip.mov`, `cheer.mov`, `sad.mov` or
+  `knock.mov` in the Character folder.
+
+A pose with a clip plays it instead of its PNG frames; a pose with neither borrows the standing
+clip. Sipping and cheering play their whole clip (up to 10 s) before moving on, so trim them to
+the action.
+
+### Tips
+
+- **Loops look best when the clip starts and ends in the same pose.** If your tool takes an end
+  frame, give it the start image again.
+- **Shorter is better:** 2–4 s clips loop smoothly and stay small (about 0.5–2 MB).
+- **Extra bottle, changed outfit?** Regenerate; the AI sometimes adds things. Say "no other
+  objects" and name what she's holding.
+- **Prefer the Terminal?** `swift run make-video-character in.mp4 sip.mov --from 0.1 --to 3`
+  (from `native/`) does the same conversion.

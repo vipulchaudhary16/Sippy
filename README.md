@@ -185,20 +185,17 @@ swift native/scripts/check_frames.swift
 
 ### Video characters
 
-For a character that moves like a cartoon, use short video clips instead of frames. Make a clip
-of each action with any image-to-video AI tool (give it your character on a plain or green
-background), then cut the background out on your Mac:
+For a character that moves like a cartoon, give each pose a short video clip. Make the clips with
+any image-to-video AI tool, then **Settings → Character → Video poses → Import video…**: trim it,
+and Sippy cuts the background out on your Mac (Apple's Vision), removes green-screen edges, crops
+and saves a transparent clip for that pose. The [character guide](docs/character-guide.md#bring-it-to-life-with-video)
+has a prompt for every pose.
+
+The same conversion from the Terminal, in `native/`:
 
 ```sh
-swift native/scripts/make_video_character.swift walk-in.mp4 walk.mov          # any plain background
-swift native/scripts/make_video_character.swift cheer.mp4 cheer.mov --green    # green screen
-swift native/scripts/make_video_character.swift sip.mp4 sip.mov --from 0.1 --to 3   # keep 0.1–3 s
+swift run make-video-character sip.mp4 sip.mov --from 0.1 --to 3   # keep 0.1–3 s
 ```
-
-The script uses Apple's Vision subject detection (or a green-screen key) and writes a transparent
-HEVC `.mov`. Drop **walk.mov**, **idle.mov**, **sip.mov**, **cheer.mov**, **sad.mov** and **knock.mov** into the
-Character folder; each clip loops while the character is in that pose and wins over PNG frames
-for the same pose. A pose without a clip or frames borrows **idle.mov**.
 
 ## Documentation
 
@@ -216,7 +213,8 @@ native/                  ← the app (Swift / SwiftUI, Swift Package)
   Sources/Sippy/         app: menu bar, overlay, dashboard, settings, audio
   Sources/SippyCore/     logic: settings, intake log, stats, scheduler, units
   Sources/SippyChecks/   logic checks (swift run SippyChecks)
-  scripts/               build.sh, make_icon.swift, check_frames.swift, make_video_character.swift
+  Sources/SippyVideo/    turns a video into a transparent character clip (Settings + CLI)
+  scripts/               build.sh, make_icon.swift, check_frames.swift
 docs/                    documentation and images
 ```
 
